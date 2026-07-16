@@ -1,9 +1,14 @@
+import CategoryTabs from "@/components/CategoryTabs";
+import VideoGrid from "../components/VideoGrid";
+
 export default function Home() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold">
-        YouTube Clone
-      </h1>
+    <main className="p-4">
+
+      <CategoryTabs/>
+      <VideoGrid />
+
+
     </main>
   );
 }

@@ -4,6 +4,7 @@ import "./globals.css";
 
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +35,17 @@ export default function RootLayout({
         <Header />
 
         {/* Sidebar + Current Page */}
-        <div className="flex min-h-screen">
+        <div className="flex min-h-[calc(100vh-64px)]">
           <Sidebar />
 
-          <main className="flex-1">
+          {/* Current page content */}
+          <main className="flex-1 min-w-0">
             {children}
           </main>
         </div>
+
+        {/* Global Toast Notifications */}
+        <Toaster />
       </body>
     </html>
   );

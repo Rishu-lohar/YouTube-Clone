@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const Header = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (searchQuery.trim()) {
-      console.log("Searching for:", searchQuery);
-    }
+    const query = searchQuery.trim();
+
+    if (!query) return;
+
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
-      
+    <header className="flex items-center justify-between px-4 py-2 bg-white border-b sticky top-0 z-50">
       {/* Left Section */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon">
@@ -43,7 +46,7 @@ const Header = () => {
         </Link>
       </div>
 
-      {/* Center Search Section */}
+      {/* Center Search */}
       <form
         onSubmit={handleSearch}
         className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
@@ -59,7 +62,7 @@ const Header = () => {
 
           <Button
             type="submit"
-            className="rounded-l-none rounded-r-full px-6 bg-gray-50 hover:bg-gray-100 text-gray-600 border"
+            className="rounded-l-none rounded-r-full px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border"
           >
             <Search className="w-5 h-5" />
           </Button>

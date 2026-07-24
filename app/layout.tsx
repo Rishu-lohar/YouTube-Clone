@@ -5,6 +5,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { UserProvider } from "@/lib/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,21 +32,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Header */}
-        <Header />
+        <UserProvider>
+          {/* Header */}
+          <Header />
 
-        {/* Sidebar + Current Page */}
-        <div className="flex min-h-[calc(100vh-64px)]">
-          <Sidebar />
+          {/* Sidebar + Current Page */}
+          <div className="flex min-h-[calc(100vh-64px)]">
+            <Sidebar />
 
-          {/* Current page content */}
-          <main className="flex-1 min-w-0">
-            {children}
-          </main>
-        </div>
+            {/* Current page content */}
+            <main className="flex-1 min-w-0">
+              {children}
+            </main>
+          </div>
 
-        {/* Global Toast Notifications */}
-        <Toaster />
+          {/* Global Toast Notifications */}
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );

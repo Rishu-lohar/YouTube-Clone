@@ -1,28 +1,48 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import axiosInstance from "@/lib/axiosinstance";
 import VideoCard from "./VideoCard";
 
-const videos = [
-  {
-    id: "1",
-    title: "Amazing Nature Documentary",
-    channel: "Nature Channel",
-    views: 45000,
-    videoPath: "/videos/demo.mp4",
-  },
-  {
-    id: "2",
-    title: "My First YouTube Clone Video",
-    channel: "Rishu Channel",
-    views: 1200,
-    videoPath: "/videos/demo.mp4",
-  },
-];
+type VideoItem = {
+  _id: string;
+  filepath: string;
+  videotitle: string;
+  videochanel: string;
+  views?: number;
+  createdAt?: string;
+};
 
-export default function VideoGrid() {
+const VideoGrid = () => {
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const res = await axiosInstance.get("/video/getall");
+        setVideos(res.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-10">Loading...</div>;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {videos.map((video) => (
-        <VideoCard key={video.id} video={video} />
+        <VideoCard key={video._id} video={video} />
       ))}
     </div>
   );
-}
+};
+
+export default VideoGrid;

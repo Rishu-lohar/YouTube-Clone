@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { Clock, MoreVertical, Play, X } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,55 +11,71 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Ek Watch Later video ka structure
-type WatchLaterVideo = {
-  id: string;
-  videoId: string;
-  title: string;
-  channel: string;
-  views: number;
-  videoPath: string;
-};
+import axiosInstance from "@/lib/axiosinstance";
+import { useUser } from "@/lib/AuthContext";
+import { getVideoSrc } from "@/lib/videoSrc";
+import VideoThumbnail from "@/components/VideoThumbnail";
 
 export default function WatchLaterContent() {
+  const { user } = useUser();
+  const [watchLater, setWatchLater] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Watch Later videos ko state me store kar rahe hain
-  const [watchLater, setWatchLater] = useState<WatchLaterVideo[]>([
-    {
-      id: "1",
-      videoId: "1",
-      title: "My First YouTube Clone Video",
-      channel: "Rishu Channel",
-      views: 45000,
-      videoPath: "/videos/demo.mp4",
-    },
-    {
-      id: "2",
-      videoId: "2",
-      title: "Amazing Nature Documentary",
-      channel: "Nature Channel",
-      views: 23000,
-      videoPath: "/videos/demo.mp4",
-    },
-  ]);
+  useEffect(() => {
+    if (user) {
+      loadWatchLater();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
-  // Watch Later se particular video remove karega
-  const handleRemoveFromWatchLater = (watchLaterId: string) => {
-    setWatchLater(
-      watchLater.filter((item) => item.id !== watchLaterId)
-    );
+  const loadWatchLater = async () => {
+    if (!user) return;
+
+    try {
+      const res = await axiosInstance.get(`/watch/${user._id}`);
+      setWatchLater(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Agar Watch Later empty hai
+  const handleRemoveFromWatchLater = async (watchLaterId: string) => {
+    try {
+      setWatchLater((prev) => prev.filter((item) => item._id !== watchLaterId));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading watch later...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="py-12 text-center">
+        <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+
+        <h2 className="mb-2 text-xl font-semibold">
+          Save videos for later
+        </h2>
+
+        <p className="text-gray-600">
+          Sign in to access your Watch Later playlist.
+        </p>
+      </div>
+    );
+  }
+
   if (watchLater.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+      <div className="py-12 text-center">
+        <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
 
-        <h2 className="text-xl font-semibold mb-2">
-          No videos saved
-        </h2>
+        <h2 className="mb-2 text-xl font-semibold">No videos saved</h2>
 
         <p className="text-gray-600">
           Videos you save for later will appear here.
@@ -70,95 +86,78 @@ export default function WatchLaterContent() {
 
   return (
     <div className="space-y-4">
-
-      {/* Top Section */}
-      <div className="flex justify-between items-center">
-
-        <p className="text-sm text-gray-600">
-          {watchLater.length} videos
-        </p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">{watchLater.length} videos</p>
 
         <Button className="flex items-center gap-2">
-          <Play className="w-4 h-4" />
+          <Play className="h-4 w-4" />
           Play all
         </Button>
-
       </div>
 
-      {/* Watch Later Videos List */}
       <div className="space-y-4">
+        {watchLater.map((item) => {
+          const video = item.videoid || {};
+          const videoSrc = getVideoSrc(video.filepath);
 
-        {watchLater.map((item) => (
-
-          <div
-            key={item.id}
-            className="flex gap-4 group"
-          >
-
-            {/* Video Preview */}
-            <Link
-              href={`/watch/${item.videoId}`}
-              className="shrink-0"
-            >
-              <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
-
-                <video
-                  src={item.videoPath}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-
-              </div>
-            </Link>
-
-            {/* Video Information */}
-            <div className="flex-1 min-w-0">
-
-              <Link href={`/watch/${item.videoId}`}>
-                <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
-                  {item.title}
-                </h3>
+          return (
+            <div key={item._id} className="group flex gap-4">
+              <Link href={`/watch/${video._id}`} className="flex-shrink-0">
+                <div className="relative aspect-video w-40 overflow-hidden rounded bg-gray-100">
+                  <VideoThumbnail
+                    src={videoSrc}
+                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  />
+                </div>
               </Link>
 
-              <p className="text-sm text-gray-600">
-                {item.channel}
-              </p>
+              <div className="min-w-0 flex-1">
+                <Link href={`/watch/${video._id}`}>
+                  <h3 className="mb-1 line-clamp-2 text-sm font-medium group-hover:text-blue-600">
+                    {video.videotitle}
+                  </h3>
+                </Link>
 
-              <p className="text-sm text-gray-600">
-                {item.views.toLocaleString()} views
-              </p>
+                <p className="text-sm text-gray-600">{video.videochanel}</p>
 
+                <p className="text-sm text-gray-600">
+                  {video.views?.toLocaleString() ?? 0} views • {" "}
+                  {video.createdAt
+                    ? `${formatDistanceToNow(new Date(video.createdAt))} ago`
+                    : "Just now"}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Added {item.createdAt
+                    ? `${formatDistanceToNow(new Date(item.createdAt))} ago`
+                    : "recently"}
+                </p>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 transition-opacity group-hover:opacity-100"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleRemoveFromWatchLater(item._id)}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Remove from Watch Later
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-
-            {/* More Options */}
-            <DropdownMenu>
-
-              <DropdownMenuTrigger
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end">
-
-                <DropdownMenuItem
-                  onClick={() =>
-                    handleRemoveFromWatchLater(item.id)
-                  }
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Remove from Watch later
-                </DropdownMenuItem>
-
-              </DropdownMenuContent>
-
-            </DropdownMenu>
-
-          </div>
-
-        ))}
-
+          );
+        })}
       </div>
-
     </div>
   );
 }

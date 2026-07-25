@@ -1,12 +1,16 @@
+import { getVideoSrc } from "@/lib/videoSrc";
+
 type VideoPlayerProps = {
   videoPath: string;
 };
 
 export default function VideoPlayer({ videoPath }: VideoPlayerProps) {
+  const src = getVideoSrc(videoPath);
+
   return (
     <div className="aspect-video bg-black rounded-lg overflow-hidden">
       <video
-        src={videoPath}
+        src={src}
         className="w-full h-full"
         controls
       >

@@ -1,236 +1,249 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
-import { FileVideo, Upload, X } from "lucide-react";
+import React, { ChangeEvent, useRef, useState } from "react";
+import { Check, FileVideo, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import axiosInstance from "@/lib/axiosinstance";
 
-type VideoUploaderProps = {
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Progress } from "./ui/progress";
+
+interface VideoUploaderProps {
   channelId: string;
   channelName: string;
-};
+}
 
-export default function VideoUploader({
+const VideoUploader = ({
   channelId,
   channelName,
-}: VideoUploaderProps) {
-
-  // Selected video file
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-
-  // Video ka title
-  const [videoTitle, setVideoTitle] = useState("");
-
-  // Upload chal raha hai ya nahi
+}: VideoUploaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
-
-  // Upload percentage
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [uploadComplete, setUploadComplete] = useState(false);
 
-  // Hidden file input ko access karne ke liye
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // User jab file select karega
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
     const files = e.target.files;
 
-    if (!files || files.length === 0) {
-      return;
-    }
+    if (!files || files.length === 0) return;
 
     const file = files[0];
 
-    // Sirf video file allow
     if (!file.type.startsWith("video/")) {
-      toast.error("Please select a valid video file.");
+      toast.error("Please upload a valid video file.");
       return;
     }
 
-    // Maximum 100MB
     if (file.size > 100 * 1024 * 1024) {
-      toast.error("Video must be smaller than 100MB.");
+      toast.error("File size exceeds 100MB.");
       return;
     }
 
     setVideoFile(file);
 
-    // File ka naam automatically title me
-    if (!videoTitle) {
+    if (!videoTitle.trim()) {
       setVideoTitle(file.name);
     }
   };
 
-  // Form reset
   const resetForm = () => {
     setVideoFile(null);
     setVideoTitle("");
-    setIsUploading(false);
     setUploadProgress(0);
+    setUploadComplete(false);
+    setIsUploading(false);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  // Upload button
-  const handleUpload = () => {
+  const cancelUpload = () => {
+    resetForm();
+  };
+
+  const handleUpload = async () => {
     if (!videoFile || !videoTitle.trim()) {
-      toast.error("Please select a video and enter a title.");
+      toast.error("Please provide a video and title.");
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    const formData = new FormData();
 
-    // Abhi backend nahi hai, isliye fake progress
-    const interval = setInterval(() => {
-      setUploadProgress((previousProgress) => {
-        if (previousProgress >= 100) {
-          clearInterval(interval);
+    formData.append("file", videoFile);
+    formData.append("videotitle", videoTitle);
+    formData.append("videochanel", channelName);
+    formData.append("uploader", channelId);
 
-          setIsUploading(false);
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
 
-          toast.success(
-            `${videoTitle} uploaded to ${channelName}`
+      await axiosInstance.post("/video/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
           );
 
-          return 100;
-        }
-
-        return previousProgress + 10;
+          setUploadProgress(progress);
+        },
       });
-    }, 300);
+
+      setUploadComplete(true);
+
+      toast.success("Video uploaded successfully!");
+
+      setTimeout(() => {
+        resetForm();
+      }, 1200);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload video.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-6">
-
-      <h2 className="text-xl font-semibold mb-4">
-        Upload a video
+    <div className="rounded-lg bg-gray-50 p-6">
+      <h2 className="mb-4 text-xl font-semibold">
+        Upload a Video
       </h2>
 
-      {!videoFile ? (
+      <div className="space-y-4">
+        {!videoFile ? (
+          <div
+            className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:bg-gray-100"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="mx-auto mb-2 h-12 w-12 text-gray-400" />
 
-        // File Selection Area
-        <div
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-100"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+            <p className="text-lg font-medium">
+              Drag & Drop your video
+            </p>
 
-          <p className="text-lg font-medium">
-            Select a video to upload
-          </p>
+            <p className="mt-1 text-sm text-gray-500">
+              or click to browse
+            </p>
 
-          <p className="text-sm text-gray-500 mt-1">
-            Click here to select a video
-          </p>
+            <p className="mt-4 text-xs text-gray-400">
+              MP4, MOV, AVI, WEBM • Max 100MB
+            </p>
 
-          <p className="text-xs text-gray-400 mt-4">
-            Video files • Maximum 100MB
-          </p>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="video/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
-
-      ) : (
-
-        // File Selected
-        <div className="space-y-4">
-
-          {/* Selected File Information */}
-          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-
-            <FileVideo className="w-6 h-6" />
-
-            <div className="flex-1 min-w-0">
-
-              <p className="font-medium truncate">
-                {videoFile.name}
-              </p>
-
-              <p className="text-sm text-gray-500">
-                {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-              </p>
-
-            </div>
-
-            {!isUploading && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={resetForm}
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            )}
-
-          </div>
-
-          {/* Video Title */}
-          <div>
-
-            <Label htmlFor="title">
-              Title
-            </Label>
-
-            <Input
-              id="title"
-              value={videoTitle}
-              onChange={(e) =>
-                setVideoTitle(e.target.value)
-              }
-              disabled={isUploading}
-              className="mt-1"
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={handleFileChange}
             />
-
           </div>
-
-          {/* Upload Progress */}
-          {isUploading && (
-            <div className="space-y-2">
-
-              <div className="flex justify-between text-sm">
-                <span>Uploading...</span>
-                <span>{uploadProgress}%</span>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-lg border bg-white p-3">
+              <div className="rounded-md bg-blue-100 p-2">
+                <FileVideo className="h-6 w-6 text-blue-600" />
               </div>
 
-              <Progress value={uploadProgress} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">
+                  {videoFile.name}
+                </p>
 
+                <p className="text-sm text-gray-500">
+                  {(videoFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+
+              {!isUploading && !uploadComplete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={cancelUpload}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              )}
+
+              {uploadComplete && (
+                <div className="rounded-full bg-green-100 p-1">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Upload Button */}
-          <div className="flex justify-end">
+            <div>
+              <Label htmlFor="title">
+                Title (Required)
+              </Label>
 
-            <Button
-              onClick={handleUpload}
-              disabled={
-                isUploading ||
-                !videoTitle.trim()
-              }
-            >
-              {isUploading
-                ? "Uploading..."
-                : "Upload"}
-            </Button>
+              <Input
+                id="title"
+                className="mt-1"
+                value={videoTitle}
+                placeholder="Enter video title..."
+                disabled={isUploading || uploadComplete}
+                onChange={(e) =>
+                  setVideoTitle(e.target.value)
+                }
+              />
+            </div>
 
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Uploading...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+
+                <Progress
+                  value={uploadProgress}
+                  className="h-2"
+                />
+              </div>
+            )}
+
+            {!uploadComplete && (
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={cancelUpload}
+                  disabled={isUploading}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  onClick={handleUpload}
+                  disabled={
+                    isUploading || !videoTitle.trim()
+                  }
+                >
+                  {isUploading
+                    ? "Uploading..."
+                    : "Upload"}
+                </Button>
+              </div>
+            )}
           </div>
-
-        </div>
-
-      )}
-
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default VideoUploader;

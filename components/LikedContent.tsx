@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { MoreVertical, X, ThumbsUp, Play } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,154 +11,142 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Ek liked video ka structure
-type LikedVideo = {
-  id: string;
-  videoId: string;
-  title: string;
-  channel: string;
-  views: number;
-  videoPath: string;
-};
+import axiosInstance from "@/lib/axiosinstance";
+import { useUser } from "@/lib/AuthContext";
+import { getVideoSrc } from "@/lib/videoSrc";
+import VideoThumbnail from "@/components/VideoThumbnail";
 
 export default function LikedContent() {
+  const [likedVideos, setLikedVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
 
-  // Liked videos ki list
-  const [likedVideos, setLikedVideos] = useState<LikedVideo[]>([
-    {
-      id: "1",
-      videoId: "1",
-      title: "My First YouTube Clone Video",
-      channel: "Rishu Channel",
-      views: 45000,
-      videoPath: "/videos/demo.mp4",
-    },
-    {
-      id: "2",
-      videoId: "2",
-      title: "Amazing Nature Documentary",
-      channel: "Nature Channel",
-      views: 23000,
-      videoPath: "/videos/demo.mp4",
-    },
-  ]);
+  useEffect(() => {
+    if (user) {
+      loadLikedVideos();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
-  // Liked videos se video remove karega
-  const handleUnlikeVideo = (likedVideoId: string) => {
-    setLikedVideos(
-      likedVideos.filter((item) => item.id !== likedVideoId)
-    );
+  const loadLikedVideos = async () => {
+    if (!user) return;
+
+    try {
+      const likedData = await axiosInstance.get(`/like/${user._id}`);
+      setLikedVideos(likedData.data);
+    } catch (error) {
+      console.error("Error loading liked videos:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Agar koi liked video nahi hai
+  const handleUnlikeVideo = async (videoId: string, likedVideoId: string) => {
+    if (!user) return;
+
+    try {
+      setLikedVideos((prev) => prev.filter((item) => item._id !== likedVideoId));
+    } catch (error) {
+      console.error("Error unliking video:", error);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="text-center py-12">
+        <ThumbsUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">
+          Keep track of videos you like
+        </h2>
+        <p className="text-gray-600">Sign in to see your liked videos.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div>Loading liked videos...</div>;
+  }
+
   if (likedVideos.length === 0) {
     return (
       <div className="text-center py-12">
-
         <ThumbsUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-
-        <h2 className="text-xl font-semibold mb-2">
-          No liked videos yet
-        </h2>
-
-        <p className="text-gray-600">
-          Videos you like will appear here.
-        </p>
-
+        <h2 className="text-xl font-semibold mb-2">No liked videos yet</h2>
+        <p className="text-gray-600">Videos you like will appear here.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-
-      {/* Top Section */}
       <div className="flex justify-between items-center">
-
-        <p className="text-sm text-gray-600">
-          {likedVideos.length} videos
-        </p>
-
+        <p className="text-sm text-gray-600">{likedVideos.length} videos</p>
         <Button className="flex items-center gap-2">
           <Play className="w-4 h-4" />
           Play all
         </Button>
-
       </div>
 
-      {/* Liked Videos List */}
       <div className="space-y-4">
+        {likedVideos.map((item) => {
+          const video = item.videoid || {};
+          const videoSrc = getVideoSrc(video.filepath);
 
-        {likedVideos.map((item) => (
-
-          <div
-            key={item.id}
-            className="flex gap-4 group"
-          >
-
-            {/* Video Preview */}
-            <Link
-              href={`/watch/${item.videoId}`}
-              className="shrink-0"
-            >
-              <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
-
-                <video
-                  src={item.videoPath}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-
-              </div>
-            </Link>
-
-            {/* Video Information */}
-            <div className="flex-1 min-w-0">
-
-              <Link href={`/watch/${item.videoId}`}>
-                <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
-                  {item.title}
-                </h3>
+          return (
+            <div key={item._id} className="flex gap-4 group">
+              <Link href={`/watch/${video._id}`} className="flex-shrink-0">
+                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
+                  <VideoThumbnail
+                    src={videoSrc}
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                </div>
               </Link>
 
-              <p className="text-sm text-gray-600">
-                {item.channel}
-              </p>
+              <div className="flex-1 min-w-0">
+                <Link href={`/watch/${video._id}`}>
+                  <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
+                    {video.videotitle}
+                  </h3>
+                </Link>
+                <p className="text-sm text-gray-600">{video.videochanel}</p>
+                <p className="text-sm text-gray-600">
+                  {video.views?.toLocaleString() ?? 0} views • {" "}
+                  {video.createdAt
+                    ? `${formatDistanceToNow(new Date(video.createdAt))} ago`
+                    : "Just now"}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Liked {item.createdAt
+                    ? `${formatDistanceToNow(new Date(item.createdAt))} ago`
+                    : "recently"}
+                </p>
+              </div>
 
-              <p className="text-sm text-gray-600">
-                {item.views.toLocaleString()} views
-              </p>
-
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleUnlikeVideo(video._id, item._id)}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Remove from liked videos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-
-            {/* More Options */}
-            <DropdownMenu>
-
-              <DropdownMenuTrigger
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-gray-100"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end">
-
-                <DropdownMenuItem
-                  onClick={() => handleUnlikeVideo(item.id)}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Remove from liked videos
-                </DropdownMenuItem>
-
-              </DropdownMenuContent>
-
-            </DropdownMenu>
-
-          </div>
-
-        ))}
-
+          );
+        })}
       </div>
-
     </div>
   );
 }

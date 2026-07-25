@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { Button } from "./ui/button";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 
-const Channeldialogue = ({
+const ChannelDialogue = ({
   isopen,
   onclose,
   channeldata,
@@ -155,4 +155,4 @@ const Channeldialogue = ({
   );
 };
 
-export default Channeldialogue;
+export default ChannelDialogue;

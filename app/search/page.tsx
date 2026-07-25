@@ -15,7 +15,7 @@ const SearchContent = () => {
           <div className="mb-6">
             <h1 className="text-xl font-medium">
               Search results for{" "}
-              <span className="text-red-600">"{query}"</span>
+              <span className="text-red-600">&quot;{query}&quot;</span>
             </h1>
           </div>
         )}

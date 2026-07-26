@@ -42,9 +42,14 @@ export default function WatchLaterContent() {
     }
   };
 
-  const handleRemoveFromWatchLater = async (watchLaterId: string) => {
+  const handleRemoveFromWatchLater = async (item: any) => {
+    if (!user) return;
+    const videoId = item?.videoid?._id;
+    if (!videoId) return;
+
     try {
-      setWatchLater((prev) => prev.filter((item) => item._id !== watchLaterId));
+      await axiosInstance.post(`/watch/${videoId}`, { userId: user._id });
+      setWatchLater((prev) => prev.filter((entry) => entry._id !== item._id));
     } catch (error) {
       console.error(error);
     }
@@ -147,7 +152,7 @@ export default function WatchLaterContent() {
 
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() => handleRemoveFromWatchLater(item._id)}
+                    onClick={() => handleRemoveFromWatchLater(item)}
                   >
                     <X className="mr-2 h-4 w-4" />
                     Remove from Watch Later

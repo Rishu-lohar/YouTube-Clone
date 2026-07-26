@@ -36,6 +36,94 @@ const normalizeTitle = (filename) => {
   return title.replace(/\s+/g, " ").trim();
 };
 
+const titlePools = {
+  CinePulse: [
+    "Cinematic B-Roll Collection",
+    "Behind the Lens: Raw Footage",
+    "Golden Hour Moments",
+    "Short Film Visuals",
+    "Story in Motion",
+  ],
+  PixelScope: [
+    "Pixel Perfect Visuals",
+    "Digital Art in Motion",
+    "Screen Capture Highlights",
+    "Design Process Walkthrough",
+    "Creative Coding Session",
+  ],
+  UrbanMotion: [
+    "City Life Timelapse",
+    "Streets After Dark",
+    "Urban Exploration Vlog",
+    "Downtown Drone Shots",
+    "City Skyline Views",
+  ],
+  TechBinge: [
+    "Coding Late Night Session",
+    "Tech Setup Tour",
+    "Developer Life Vlog",
+    "Behind the Code",
+    "Workstation Aesthetic",
+  ],
+  "Global Horizons": [
+    "Mountain Escape Vlog",
+    "Travel Diaries: Hidden Gems",
+    "Exploring New Horizons",
+    "Wanderlust Chronicles",
+    "Scenic Views Around the World",
+  ],
+  "Creative Lens": [
+    "Nature in Frame",
+    "Macro World Close-Up",
+    "Everyday Aesthetic Shots",
+    "Slow Living Moments",
+    "Simple Things, Beautifully Shot",
+  ],
+  ByteCraft: [
+    "Gadget Unboxing Vlog",
+    "Tech Review Session",
+    "Gaming Setup Tour",
+    "Hands-On First Look",
+    "Weekend Tech Diaries",
+  ],
+  TravelFlux: [
+    "Postcard Perfect Places",
+    "Old Town Wanderings",
+    "Travel Vlog: On the Road",
+    "Hidden Villages Diaries",
+    "Sunset Chasing Around Europe",
+  ],
+  SoundWave: [
+    "Chill Study Session Vibes",
+    "Acoustic Moments",
+    "Music & Mood Vlog",
+    "Sound of Everyday Life",
+    "Ambient Sessions",
+  ],
+  FilmForge: [
+    "Short Film Behind the Scenes",
+    "Raw Cinematic Cuts",
+    "Director's Cut Preview",
+    "Visual Storytelling Reel",
+    "Film Set Diaries",
+  ],
+};
+
+const hashString = (value) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const generatePrettyTitle = (channelName, filename) => {
+  const pool = titlePools[channelName] || [normalizeTitle(filename)];
+  const index = hashString(filename) % pool.length;
+  return pool[index];
+};
+
 const randomInt = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -52,7 +140,7 @@ const generatePublicVideoMetadata = async (filename, index) => {
   const likeCount = Math.max(1, Math.round(views * (Math.random() * 0.08 + 0.02)));
 
   return {
-    videotitle: normalizeTitle(filename),
+    videotitle: generatePrettyTitle(channelName, filename),
     filename,
     filepath: `/videos/${filename}`,
     filetype: "video/mp4",
@@ -100,6 +188,7 @@ const syncPublicVideos = async () => {
             filepath,
             filetype: "video/mp4",
             filesize: String(fileStat.size),
+            videotitle: generatePrettyTitle(existing.videochanel, filename),
           },
           {
             returnDocument: "after",
@@ -149,7 +238,11 @@ export const uploadvideo = async (req, res) => {
 export const getallvideo = async (req, res) => {
   try {
     await syncPublicVideos();
-    const videos = await video.find();
+    const videos = await video
+      .find({
+        filepath: { $regex: "^/videos/" },
+      })
+      .sort({ createdAt: -1 });
 
     return res.status(200).json(videos);
   } catch (error) {

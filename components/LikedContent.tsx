@@ -46,6 +46,7 @@ export default function LikedContent() {
     if (!user) return;
 
     try {
+      await axiosInstance.post(`/like/${videoId}`, { userId: user._id });
       setLikedVideos((prev) => prev.filter((item) => item._id !== likedVideoId));
     } catch (error) {
       console.error("Error unliking video:", error);

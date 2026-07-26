@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 
 export const postcomment = async (req, res) => {
   try {
-    const newComment = new Comment(req.body);
+    const newComment = new comment(req.body);
 
     await newComment.save();
 

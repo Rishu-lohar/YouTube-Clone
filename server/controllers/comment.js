@@ -2,8 +2,40 @@
 import comment from "../Models/comment.js";
 import mongoose from "mongoose";
 
+import {
+  containsBadWords,
+  onlySpecialCharacters,
+} from "../utils/commentValidation.js";
+
 export const postcomment = async (req, res) => {
   try {
+
+    const { commentbody } = req.body;
+
+    if (!commentbody || commentbody.trim() === "") {
+      return res.status(400).json({
+        message: "Comment body is required",
+      });
+    }
+
+    if (commentbody.length > 500) {
+      return res.status(400).json({
+        message: "Comment is too long",
+      });
+    }
+
+    if (containsBadWords(commentbody)) {
+      return res.status(400).json({
+        message: "Comment contains abusive language",
+      });
+    }
+
+    if (onlySpecialCharacters(commentbody)) {
+      return res.status(400).json({
+        message: "Invalid comment",
+      });
+    }
+
     const newComment = new comment(req.body);
 
     await newComment.save();
@@ -11,6 +43,7 @@ export const postcomment = async (req, res) => {
     return res.status(200).json({
       comment: true,
     });
+
   } catch (error) {
     console.error(error);
 

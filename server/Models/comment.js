@@ -76,7 +76,7 @@ const commentSchema = new mongoose.Schema(
     // Comment is Visible or gone in review
     status:{
       type: String,
-      enum:["active", "Flagged"],
+      enum:["active", "flagged"],
       default: "active",
     },
 

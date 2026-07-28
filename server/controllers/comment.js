@@ -123,3 +123,116 @@ export const editcomment = async (req, res) => {
     });
   }
 };
+
+// Likes
+export const likeComment = async(req,res)=>{
+  try{
+    const {id} = req.params;
+    const {userid} = req.body;
+
+    // Check valid comment id
+    if (!mongoose.Types.ObjectId.isValid(id)){
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    //Find comment
+    const existingComment = await comment.findById(id);
+
+    if (!existingComment){
+      return res.status(404).json({
+        message:"Comment not found",
+      });
+    }
+
+    // User already liked..?
+    const alreadyLiked = existingComment.likes.includes(userid);
+
+    if (alreadyLiked){
+
+      //unlike
+      existingComment.likes.pull(userid);
+    }
+    else{
+      
+      //Like
+      existingComment.likes.push(userid);
+
+      // Remove dislike if present
+      existingComment.dislikes.pull(userid);
+    }
+
+    await existingComment.save();
+
+    return res.status(200).json({
+      success:true,
+      likes:existingComment.likes.length,
+      dislikes:existingComment.dislikes.length,
+    });
+  }
+  catch(error){
+    console.error(error);
+
+    return res.status(500).json({
+      message:"Somthing went wrong",
+    });
+  }
+};
+
+
+// Dislikes
+export const dislikeComment = async(req,res)=>{
+
+  try{
+
+    const {id} = req.params;
+    const {userid} = req.body;
+
+    if(!mongoose.Types.ObjectId.isValid(id)){
+      return res.status(404).json({
+        message : "Comment not found",
+      });
+    }
+
+    // Find Comment 
+    const existingComment = await comment.findById(id);
+    if (!existingComment){
+      return res.status(404).json({
+        message:"Comment not found",
+      })
+    }
+
+    // User alrady Liked?
+    const alreadyDisliked = existingComment.dislikes.includes(userid);
+
+    if(alreadyDisliked){
+      existingComment.dislikes.pull(userid);
+    }
+    else{
+
+      // Dislike
+      existingComment.dislikes.push(userid);
+
+      // Remove like if present
+      existingComment.likes.pull(userid);
+    }
+
+    await existingComment.save();
+
+    return res.status(200).json({
+      success:true,
+      likes:existingComment.likes.length,
+      dislikes:existingComment.dislikes.length,
+
+    });
+    
+  }
+  catch(error){
+    console.error(error);
+
+    return res.status(500).json({
+      message:"Something went wrong",
+    });
+  }
+};

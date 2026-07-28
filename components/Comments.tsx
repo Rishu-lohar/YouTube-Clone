@@ -7,6 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 
+import {ThumbsUp, ThumbsDown} from "lucide-react";
+
 interface Comment {
   _id: string;
   videoid: string;
@@ -14,6 +16,9 @@ interface Comment {
   commentbody: string;
   usercommented: string;
   commentedon: string;
+
+  likes:string[];
+  dislikes:string[];
 }
 
 const Comments = ({ videoId }: any) => {
@@ -64,6 +69,8 @@ const Comments = ({ videoId }: any) => {
           commentbody: newComment,
           usercommented: user.name || "Anonymous",
           commentedon: new Date().toISOString(),
+          likes:[],
+          dislikes:[],
         };
 
         setComments([newCommentObj, ...comments]);
@@ -110,6 +117,40 @@ const Comments = ({ videoId }: any) => {
         setComments((prev) => prev.filter((c) => c._id !== id));
       }
     } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleLike = async(id:string)=>{
+    if (!user) return;
+
+    try{
+      const res = await axiosInstance.put(`/comment/like/${id}`,{
+        userid: user._id,
+      });
+
+      if(res.data.success){
+        loadComments();
+      }
+    }
+    catch(error){
+      console.error(error);
+    }
+  };
+
+  const handleDisLike = async(id:string)=>{
+    if (!user) return;
+
+    try{
+      const res = await axiosInstance.put(`/comment/dislike/${id}`,{
+        userid: user._id,
+      });
+
+      if(res.data.success){
+        loadComments();
+      }
+    }
+    catch(error){
       console.error(error);
     }
   };
@@ -201,6 +242,28 @@ const Comments = ({ videoId }: any) => {
                 ) : (
                   <>
                     <p className="text-sm">{comment.commentbody}</p>
+
+                    <div className="flex items-center gap-4 mt-2 text-gray-500">
+
+                      <button
+                        onClick={()=>handleLike(comment._id)}
+                        className="flex items-center gap-1 hover:text-blue-500"
+                      >
+                        <ThumbsUp size={16}/>
+                        {comment.likes.length}
+                      </button> 
+
+                      <button
+                        onClick={()=>handleDisLike(comment._id)}
+                        className="flex items-center gap-1 hover:text-red-500"
+                      >
+                        <ThumbsDown size={16}/>
+                        {comment.dislikes.length}
+                      </button>  
+
+                    </div>
+
+
                     {comment.userid === user?._id && (
                       <div className="flex gap-2 mt-2 text-sm text-gray-500">
                         <button onClick={() => handleEdit(comment)}>

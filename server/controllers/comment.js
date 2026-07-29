@@ -1,5 +1,5 @@
 
-import comment from "../Models/comment.js";
+import comment from "../models/comment.js";
 import mongoose from "mongoose";
 
 import {
@@ -233,6 +233,64 @@ export const dislikeComment = async(req,res)=>{
 
     return res.status(500).json({
       message:"Something went wrong",
+    });
+  }
+};
+
+// Report 
+
+export const reportComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userid, reason } = req.body;
+
+    const existingComment = await comment.findById(id);
+
+    if (!existingComment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    // Check if user already reported
+    const alreadyReported = existingComment.reported.find(
+      (report) => report.user.toString() === userid
+    );
+
+    if (alreadyReported) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reported this comment",
+      });
+    }
+
+    // Add report
+    existingComment.reported.push({
+      user: userid,
+      reason: reason || "Reported",
+    });
+
+    // Auto flag after 5 reports
+    if (existingComment.reported.length >= 5) {
+      existingComment.status = "flagged";
+    }
+
+    await existingComment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Comment reported successfully",
+      reports: existingComment.reported.length,
+      status: existingComment.status,
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
     });
   }
 };

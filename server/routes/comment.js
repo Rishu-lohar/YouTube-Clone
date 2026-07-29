@@ -6,6 +6,7 @@ import {
   editcomment,
   likeComment,
   dislikeComment,
+  reportComment,
 } from "../controllers/comment.js";
 
 const router = express.Router();
@@ -21,5 +22,7 @@ router.post("/editcomment/:id", editcomment);
 router.put("/like/:id", likeComment);
 
 router.put("/dislike/:id", dislikeComment);
+
+router.put("/report/:id", reportComment);
 
 export default router;

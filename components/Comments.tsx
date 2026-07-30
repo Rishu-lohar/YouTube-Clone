@@ -89,22 +89,11 @@ const Comments = ({ videoId }: any) => {
       });
 
       if (res.data.comment) {
-        const newCommentObj: Comment = {
-          _id: Date.now().toString(),
-          videoid: videoId,
-          userid: user._id,
-          commentbody: newComment,
-          usercommented: user.name || "Anonymous",
-          commentedon: new Date().toISOString(),
-          likes:[],
-          dislikes:[],
-          reported:[],
-          status:"active",
-        };
+        setNewComment("");
 
-        setComments([newCommentObj, ...comments]);
+        await loadComments();
       }
-      setNewComment("");
+
     } catch (error) {
       console.error("Error adding comment:", error);
     } finally {

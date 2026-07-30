@@ -140,14 +140,11 @@ export default function WatchLaterContent() {
               </div>
 
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                
+                <DropdownMenuTrigger
+                  className="opacity-0 transition-opacity group-hover:opacity-100 inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted"
+                >
+                  <MoreVertical className="h-4 w-4" />
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">

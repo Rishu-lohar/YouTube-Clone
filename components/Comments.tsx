@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 
-import{
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -15,7 +15,7 @@ import{
   DialogFooter,
 } from "./ui/dialog";
 
-import{
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,7 +23,7 @@ import{
   SelectValue,
 } from "./ui/select";
 
-import {ThumbsUp, ThumbsDown} from "lucide-react";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface Comment {
   _id: string;
@@ -33,8 +33,8 @@ interface Comment {
   usercommented: string;
   commentedon: string;
 
-  likes:string[];
-  dislikes:string[];
+  likes: string[];
+  dislikes: string[];
 
   reported: {
     user: string;
@@ -53,13 +53,19 @@ const Comments = ({ videoId }: any) => {
   const [editText, setEditText] = useState("");
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const [reportOpen,setReportOpen] = useState(false);
-  const [ selectedCommentId, setSelectedCommentId] = useState("");
-  const [ reportReason, setReportReason] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [selectedCommentId, setSelectedCommentId] = useState("");
+  const [reportReason, setReportReason] = useState("");
+  const [translatedComments, setTranslatedComments] = useState<{
+    [key: string]: string;
+  }>({});
+  const [targetLanguage, setTargetLanguage] = useState("hi");
 
   useEffect(() => {
     loadComments();
   }, [videoId]);
+
+  // Handle loadComments()
 
   const loadComments = async () => {
     try {
@@ -75,6 +81,8 @@ const Comments = ({ videoId }: any) => {
   if (loading) {
     return <div>Loading comments...</div>;
   }
+
+  // HandleSubmitComment()
 
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim()) return;
@@ -106,6 +114,8 @@ const Comments = ({ videoId }: any) => {
     setEditText(comment.commentbody);
   };
 
+  // HandleUpdateComment()
+
   const handleUpdateComment = async () => {
     if (!editText.trim() || !editingCommentId) return;
     try {
@@ -128,6 +138,8 @@ const Comments = ({ videoId }: any) => {
     }
   };
 
+  // HandleDelete()
+
   const handleDelete = async (id: string) => {
     try {
       const res = await axiosInstance.delete(`/comment/deletecomment/${id}`);
@@ -139,70 +151,96 @@ const Comments = ({ videoId }: any) => {
     }
   };
 
-  const handleLike = async(id:string)=>{
+  // HandleLike()
+
+  const handleLike = async (id: string) => {
     if (!user) return;
 
-    try{
-      const res = await axiosInstance.put(`/comment/like/${id}`,{
+    try {
+      const res = await axiosInstance.put(`/comment/like/${id}`, {
         userid: user._id,
       });
 
-      if(res.data.success){
+      if (res.data.success) {
         loadComments();
       }
     }
-    catch(error){
+    catch (error) {
       console.error(error);
     }
   };
 
-  const handleDisLike = async(id:string)=>{
+
+  // HandleDisLike
+  const handleDisLike = async (id: string) => {
     if (!user) return;
 
-    try{
-      const res = await axiosInstance.put(`/comment/dislike/${id}`,{
+    try {
+      const res = await axiosInstance.put(`/comment/dislike/${id}`, {
         userid: user._id,
       });
 
-      if(res.data.success){
+      if (res.data.success) {
         loadComments();
       }
     }
-    catch(error){
+    catch (error) {
       console.error(error);
     }
   };
+
+  // HandleReport
 
   const openReportDialog = (id: string) => {
-  setSelectedCommentId(id);
-  setReportReason("");
-  setReportOpen(true);
+    setSelectedCommentId(id);
+    setReportReason("");
+    setReportOpen(true);
   };
 
   const handleReport = async () => {
-  if (!user || !selectedCommentId || !reportReason) return;
+    if (!user || !selectedCommentId || !reportReason) return;
 
-  try {
-    const res = await axiosInstance.put(
-      `/comment/report/${selectedCommentId}`,
-      {
-        userid: user._id,
-        reason: reportReason,
+    try {
+      const res = await axiosInstance.put(
+        `/comment/report/${selectedCommentId}`,
+        {
+          userid: user._id,
+          reason: reportReason,
+        }
+      );
+
+      if (res.data.success) {
+        alert("Comment Reported Successfully");
+
+        setReportOpen(false);
+        setReportReason("");
+
+        loadComments();
       }
-    );
-
-    if (res.data.success) {
-      alert("Comment Reported Successfully");
-
-      setReportOpen(false);
-      setReportReason("");
-
-      loadComments();
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
+
+  // HandleTranslate()
+
+  const handleTranslate = async (id: string) => {
+    try {
+      const res = await axiosInstance.put(`/comment/translate/${id}`, {
+        targetLanguage,
+      });
+
+      if (res.data.success) {
+        setTranslatedComments((prev) => ({
+          ...prev,
+          [id]: res.data.translatedText,
+        }));
+      }
+    }
+    catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -291,34 +329,62 @@ const Comments = ({ videoId }: any) => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-sm">{comment.commentbody}</p>
+                      <p className="text-sm">
+                        {translatedComments[comment._id] || comment.commentbody}
+                      </p>
 
                       <div className="flex items-center gap-4 mt-2 text-gray-500">
 
                         <button
-                          onClick={()=>handleLike(comment._id)}
+                          onClick={() => handleLike(comment._id)}
                           className="flex items-center gap-1 hover:text-blue-500"
                         >
-                          <ThumbsUp size={16}/>
+                          <ThumbsUp size={16} />
                           {comment.likes.length}
-                        </button> 
+                        </button>
 
                         <button
-                          onClick={()=>handleDisLike(comment._id)}
+                          onClick={() => handleDisLike(comment._id)}
                           className="flex items-center gap-1 hover:text-red-500"
                         >
-                          <ThumbsDown size={16}/>
+                          <ThumbsDown size={16} />
                           {comment.dislikes.length}
-                        </button>  
+                        </button>
 
                         <button
                           onClick={() => openReportDialog(comment._id)}
-                          className = "text-sm hover:text-red-500"
+                          className="text-sm hover:text-red-500"
                         >
                           🚩 Report
                         </button>
-                      </div>
 
+
+                        <Select
+                          value={targetLanguage}
+                          onValueChange={(value) => setTargetLanguage(value??"hi")}
+                        >
+                          <SelectTrigger className="w-[120px] h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            <SelectItem value="hi">Hindi</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
+                            <SelectItem value="ja">Japanese</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleTranslate(comment._id)}
+                        >
+                          🌐 Translate
+                        </Button>
+
+                      </div>
 
                       {comment.userid === user?._id && (
                         <div className="flex gap-2 mt-2 text-sm text-gray-500">
@@ -331,7 +397,7 @@ const Comments = ({ videoId }: any) => {
                         </div>
                       )}
 
-                      
+
                     </>
                   )}
                 </div>
@@ -351,7 +417,7 @@ const Comments = ({ videoId }: any) => {
 
           <Select
             value={reportReason}
-            onValueChange={(value)=>{
+            onValueChange={(value) => {
               setReportReason(value as string);
             }}
           >
@@ -402,7 +468,7 @@ const Comments = ({ videoId }: any) => {
 
         </DialogContent>
       </Dialog>
-      
+
     </>
   );
 };

@@ -1,6 +1,7 @@
 
 import comment from "../models/comment.js";
 import mongoose from "mongoose";
+import { translate } from "@vitalets/google-translate-api";
 
 import {
   containsBadWords,
@@ -291,6 +292,55 @@ export const reportComment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
+    });
+  }
+};
+
+
+// Translate Comment
+
+export const translateComment = async (req,res)=>{
+
+  try{
+    const {id} = req.params;
+    const{targetLanguage} = req.body;
+
+    // Check valid id
+    if(!mongoose.Types.ObjectId.isValid(id)){
+      return res.status(404).json({
+        success:false,
+        message:"Comment not found",
+      });
+    }
+
+    // Find Comment 
+    const existingcomment = await comment.findById(id);
+
+    if(!existingcomment){
+      return res.status(404).json({
+        success:false,
+        message:"Comment not found",
+      });
+    }
+
+    // Translate 
+    const translated = await translate(
+      existingcomment.commentbody,
+      {
+        to:targetLanguage,
+      }
+    );
+    return res.status(200).json({
+      success:true,
+      translatedText:translated.text,
+    });
+  }
+  catch(error){
+    console.error(error);
+
+    return res.status(500).json({
+      success:false,
+      message:"Translation failed",
     });
   }
 };

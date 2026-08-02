@@ -124,6 +124,22 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
+  // handleDownload()
+  const handleDownload = async ()=>{
+    if(!user) return;
+
+    try{
+      const res = await axiosInstance.post(`/download/${video._id}`,{
+        userId: user._id,
+      });
+      alert(res.data.message);
+    }
+    catch(error){
+      console.log(error);
+    }
+  };
+
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -203,6 +219,7 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="rounded-full bg-gray-100"
+            onClick={handleDownload}
           >
             <Download className="mr-2 h-5 w-5" />
             Download

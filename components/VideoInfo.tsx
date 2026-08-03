@@ -125,17 +125,21 @@ const VideoInfo = ({ video }: any) => {
   };
 
   // handleDownload()
-  const handleDownload = async ()=>{
-    if(!user) return;
+  const handleDownload = async () => {
+    if (!user) return;
 
-    try{
-      const res = await axiosInstance.post(`/download/${video._id}`,{
+    try {
+      const res = await axiosInstance.post(`/download/${video._id}`, {
         userId: user._id,
       });
       alert(res.data.message);
     }
-    catch(error){
+    catch (error: any) {
       console.log(error);
+
+      alert(
+        error.response?.data?.message || "Something went wrong"
+      );
     }
   };
 
@@ -170,9 +174,8 @@ const VideoInfo = ({ video }: any) => {
               onClick={handleLike}
             >
               <ThumbsUp
-                className={`mr-2 h-5 w-5 ${
-                  isLiked ? "fill-black text-black" : ""
-                }`}
+                className={`mr-2 h-5 w-5 ${isLiked ? "fill-black text-black" : ""
+                  }`}
               />
               {likes.toLocaleString()}
             </Button>
@@ -186,9 +189,8 @@ const VideoInfo = ({ video }: any) => {
               onClick={handleDislike}
             >
               <ThumbsDown
-                className={`mr-2 h-5 w-5 ${
-                  isDisliked ? "fill-black text-black" : ""
-                }`}
+                className={`mr-2 h-5 w-5 ${isDisliked ? "fill-black text-black" : ""
+                  }`}
               />
               {dislikes.toLocaleString()}
             </Button>
@@ -197,9 +199,8 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-full bg-gray-100 ${
-              isWatchLater ? "text-primary" : ""
-            }`}
+            className={`rounded-full bg-gray-100 ${isWatchLater ? "text-primary" : ""
+              }`}
             onClick={handleWatchLater}
           >
             <Clock className="mr-2 h-5 w-5" />
@@ -247,9 +248,8 @@ const VideoInfo = ({ video }: any) => {
         </div>
 
         <div
-          className={`text-sm ${
-            showFullDescription ? "" : "line-clamp-3"
-          }`}
+          className={`text-sm ${showFullDescription ? "" : "line-clamp-3"
+            }`}
         >
           <p>{video.description || "No description available."}</p>
         </div>

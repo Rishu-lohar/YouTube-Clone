@@ -13,7 +13,7 @@ const downloadSchema = new mongoose.Schema(
         // Which Video
         videoid:{
             type: mongoose.Schema.Types.ObjectId,
-            ref: "videofile",
+            ref: "videofiles",
             required: true,
         },
 

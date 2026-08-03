@@ -58,6 +58,25 @@ export const downloadVideo = async (req, res)=>{
             });
         }
 
+        // Daily Download Limit
+        if(existingUser.plan === "Free"){
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const downloadCount = await download.countDocuments({
+                userid: userId,
+                createdAt: {$gte: today},
+            });
+
+            if(downloadCount >=5){
+                return res.status(403).json({
+                    success: false,
+                    message: "Daily download limit reached. Upgrade your plan.",
+                });
+            }
+        }
+
         // Save Download
         const newDownload = new download({
             userid: userId,
@@ -94,7 +113,7 @@ export const getAllDownloads = async (req,res)=>{
         })
         .populate({
             path:"videoid",
-            model: "video"
+            model: "videofiles"
         });
         return res.status(200).json(downloads);
     }

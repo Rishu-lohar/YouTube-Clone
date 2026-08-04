@@ -16,11 +16,14 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, "");
 
 type ChannelVideo = {
+  _id: string;
+  filepath: string;
+  videotitle: string;
+  videochanel: string;
   uploader?: string;
-  videochanel?: string;
-  videotitle?: string;
-  _id?: string;
   description?: string;
+  views?: number;
+  createdAt?: string;
 };
 
 const ChannelPage = () => {

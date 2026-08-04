@@ -132,13 +132,9 @@ export default function HistoryContent() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 transition-opacity group-hover:opacity-100"
-                  >
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-100">
                     <MoreVertical className="h-4 w-4" />
-                  </Button>
+                  </div>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">

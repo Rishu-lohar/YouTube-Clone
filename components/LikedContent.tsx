@@ -127,13 +127,9 @@ export default function LikedContent() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-100">
+                    <MoreVertical className="h-4 w-4" />
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem

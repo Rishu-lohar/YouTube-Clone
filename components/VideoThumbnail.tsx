@@ -17,7 +17,7 @@ export default function VideoThumbnail({
   return (
     <div className="relative overflow-hidden rounded-lg bg-gray-100">
       <video
-        src={src}
+        src={src || undefined}
         className={className}
         preload="metadata"
         muted

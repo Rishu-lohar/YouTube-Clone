@@ -9,8 +9,9 @@ import userroutes from "./routes/auth.js";
 import videoroutes from "./routes/video.js";
 import likeroutes from "./routes/like.js";
 import watchlaterroutes from "./routes/watchlater.js";
-import historyrroutes from "./routes/history.js";
+import historyroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
+import subscriptionrouter from "./models/subscription.js";
 
 import downloadRoutes from "./routes/download.js";
 
@@ -41,6 +42,7 @@ app.use("/watch", watchlaterroutes);
 app.use("/history", historyrroutes);
 app.use("/comment", commentroutes);
 app.use("/download", downloadRoutes);
+app.use("/subscription", subscriptionroutes);
 
 const PORT = process.env.PORT || 5000;
 

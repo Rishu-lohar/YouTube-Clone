@@ -11,7 +11,7 @@ import likeroutes from "./routes/like.js";
 import watchlaterroutes from "./routes/watchlater.js";
 import historyroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
-import subscriptionrouter from "./models/subscription.js";
+import subscriptionrouters from "./routes/subscription.js";
 
 import downloadRoutes from "./routes/download.js";
 

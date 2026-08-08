@@ -1,4 +1,4 @@
-import subscription from "../models/subscription";
+import subscription from "../models/subscription.js";
 import user from "../models/Auth.js";
 import mongoose from "mongoose";
 import razorpay from "../lib/razorpay.js";

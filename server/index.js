@@ -39,10 +39,10 @@ app.use("/user", userroutes);
 app.use("/video", videoroutes);
 app.use("/like", likeroutes);
 app.use("/watch", watchlaterroutes);
-app.use("/history", historyrroutes);
+app.use("/history", historyroutes);
 app.use("/comment", commentroutes);
 app.use("/download", downloadRoutes);
-app.use("/subscription", subscriptionroutes);
+app.use("/subscription", subscriptionrouters);
 
 const PORT = process.env.PORT || 5000;
 

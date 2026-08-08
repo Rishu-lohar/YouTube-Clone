@@ -1,11 +1,11 @@
 import express from "express";
-import { createSubscription, createOrder  } from "../controllers/subscription";
+import { createSubscription, createOrder  } from "../controllers/subscription.js";
   
 
-const router = express.router();
+const router = express.Router();
 
 // create Subscription 
 router.post("/", createSubscription);
-router.post("/create-order, createOrder");
+router.post("/create-order", createOrder);
 
 export default router;

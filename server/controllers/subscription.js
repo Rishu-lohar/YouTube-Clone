@@ -2,6 +2,7 @@ import subscription from "../models/subscription.js";
 import user from "../models/Auth.js";
 import mongoose from "mongoose";
 import razorpay from "../lib/razorpay.js";
+import crypto from "crypto";
 
 export const createSubscription = async (req, res) => {
     try {
@@ -75,7 +76,7 @@ export const createOrder = async (req, res) => {
             order,
         });
     }
-    catch(error){
+    catch (error) {
         console.log(error);
 
         return res.status(500).json({
@@ -83,5 +84,45 @@ export const createOrder = async (req, res) => {
             message: "Order creation failed",
         });
     }
+
+};
+
+// verifyPayment 
+export const verifyPayemnt = async (req, res) => {
+    try {
+        const {
+            razorpay_oder_id,
+            razorpay_payemnt_id,
+            razorpay_signature,
+        } = req.body;
+
+        const body = razorpay_oder_id + "|" + razorpay_payemnt_id;
+
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest("hex");
+
+        if(expectedSignature === razorpay_signature){
+            return res.status(200).json({
+                success:true,
+                message:"Payment verified successfully",
+            });
+        }
+        return res.status(400).json({
+            success: false,
+            message: "Payment verification failed",
+        })  ;  
+
+    }
+    catch(error){
+        console.error("Payment verification error: ", error);
+
+        res.status(500).json({
+            success: false,
+            message: "internal server error",
+        });
+    }
+
 
 };

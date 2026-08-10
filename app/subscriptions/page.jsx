@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import SubscriptionPlans from "@/components/SubscriptionPlans";
 
 export default function SubscriptionsPage() {
   return (

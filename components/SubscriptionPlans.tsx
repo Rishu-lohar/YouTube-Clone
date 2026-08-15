@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/lib/AuthContext";
@@ -13,8 +14,51 @@ declare global {
 
 export default function SubscriptionPlans() {
   const { user } = useUser();
-  const [currentPlan, setCurrentPlan] = useState<"Free" | "Gold">("Free");
+
+  const [currentPlan, setCurrentPlan] = useState<
+    "Free" | "Bronze" | "Silver" | "Gold"
+  >("Free");
+
   const [loadingStatus, setLoadingStatus] = useState(true);
+
+  const plans = [
+    {
+      name: "Free",
+      price: 0,
+      features: [
+        "480p Streaming",
+        "Ads Included",
+        "Basic Access",
+      ],
+    },
+    {
+      name: "Bronze",
+      price: 99,
+      features: [
+        "720p HD Streaming",
+        "Video Downloads",
+        "Priority Support",
+      ],
+    },
+    {
+      name: "Silver",
+      price: 199,
+      features: [
+        "1080p Full HD",
+        "Ad-Free Experience",
+        "Unlimited Downloads",
+      ],
+    },
+    {
+      name: "Gold",
+      price: 299,
+      features: [
+        "4K Streaming",
+        "Offline Downloads",
+        "Premium Support",
+      ],
+    },
+  ];
 
   const fetchSubscriptionStatus = async () => {
     if (!user) {
@@ -24,10 +68,17 @@ export default function SubscriptionPlans() {
     }
 
     try {
-      const res = await axiosInstance.get(`/subscription/status/${user._id}`);
-      setCurrentPlan(res.data?.subscription ? "Gold" : "Free");
-    } catch (error) {
-      console.error("Error fetching subscription status: ", error);
+      const res = await axiosInstance.get(
+        `/subscription/status/${user._id}`
+      );
+
+      if (res.data.subscription) {
+        setCurrentPlan(res.data.subscription.plan);
+      } else {
+        setCurrentPlan("Free");
+      }
+    } catch (err) {
+      console.error(err);
       setCurrentPlan("Free");
     } finally {
       setLoadingStatus(false);
@@ -36,38 +87,52 @@ export default function SubscriptionPlans() {
 
   useEffect(() => {
     fetchSubscriptionStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (
+    plan: string,
+    amount: number
+  ) => {
     if (!user) return;
 
     try {
-      const res = await axiosInstance.post("/subscription/create-order", {
-        amount: 99,
-        userId: user._id,
-      });
+      const res = await axiosInstance.post(
+        "/subscription/create-order",
+        {
+          userId: user._id,
+          plan,
+          amount,
+        }
+      );
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: res.data.order.amount,
         currency: res.data.order.currency,
         name: "YouTube Clone",
-        description: "Premium Subscription",
+        description: `${plan} Subscription`,
         order_id: res.data.order.id,
 
         handler: async function (response: any) {
           try {
-            await axiosInstance.post("/subscription/verify-payment", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              userId: user._id,
-            });
+            await axiosInstance.post(
+              "/subscription/verify-payment",
+              {
+                razorpay_order_id:
+                  response.razorpay_order_id,
+                razorpay_payment_id:
+                  response.razorpay_payment_id,
+                razorpay_signature:
+                  response.razorpay_signature,
+                userId: user._id,
+                plan,
+                amount,
+              }
+            );
 
             await fetchSubscriptionStatus();
           } catch (error) {
-            console.error("Verification Error: ", error);
+            console.error("Verification Error:", error);
           }
         },
       };
@@ -75,7 +140,7 @@ export default function SubscriptionPlans() {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.error("Subscription error: ", error);
+      console.error("Subscription Error:", error);
     }
   };
 
@@ -86,41 +151,60 @@ export default function SubscriptionPlans() {
         strategy="afterInteractive"
       />
 
-      <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto p-6">
-        {/* Free Plan */}
-        <div className="rounded-xl border p-6">
-          <h2 className="text-xl font-semibold">Free</h2>
-          <p className="mt-2 text-3xl font-bold"> ₹0</p>
-          <p className="mt-2 text-gray-600">Basic access to the platform</p>
-
-          <Button className="mt-6 w-full" disabled={loadingStatus || currentPlan === "Free"}>
-            {currentPlan === "Free" ? "Current Plan" : "Downgrade"}
-          </Button>
-        </div>
-
-        {/* Premium Plan */}
-        <div className="rounded-xl border p-6">
-          <h2 className="text-xl font-semibold"> Premium</h2>
-          <p className="mt-2 text-3xl font-bold">
-            ₹99
-            <span className="text-sm font-normal">/month</span>
-          </p>
-          <p className="mt-2 text-gray-600">
-            Unlock premium features and benefits.
-          </p>
-
-          <Button
-            className="mt-6 w-full"
-            disabled={loadingStatus || currentPlan === "Gold"}
-            onClick={handleSubscribe}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto p-6">
+        {plans.map((plan) => (
+          <div
+            key={plan.name}
+            className={`rounded-xl border p-6 shadow-md transition hover:shadow-xl ${
+              currentPlan === plan.name
+                ? "border-red-500"
+                : ""
+            }`}
           >
-            {loadingStatus
-              ? "Loading..."
-              : currentPlan === "Gold"
-              ? "Current Plan"
-              : "Subscribe"}
-          </Button>
-        </div>
+            <h2 className="text-2xl font-bold">
+              {plan.name}
+            </h2>
+
+            <p className="mt-3 text-3xl font-bold">
+              ₹{plan.price}
+              {plan.price !== 0 && (
+                <span className="text-sm font-normal">
+                  /month
+                </span>
+              )}
+            </p>
+
+            <ul className="mt-5 space-y-2 text-sm text-gray-600">
+              {plan.features.map((feature) => (
+                <li key={feature}>✅ {feature}</li>
+              ))}
+            </ul>
+
+            <Button
+              className="mt-6 w-full"
+              disabled={
+                loadingStatus ||
+                currentPlan === plan.name
+              }
+              onClick={() => {
+                if (plan.price > 0) {
+                  handleSubscribe(
+                    plan.name,
+                    plan.price
+                  );
+                }
+              }}
+            >
+              {loadingStatus
+                ? "Loading..."
+                : currentPlan === plan.name
+                ? "Current Plan"
+                : plan.price === 0
+                ? "Free Plan"
+                : "Upgrade"}
+            </Button>
+          </div>
+        ))}
       </div>
     </>
   );

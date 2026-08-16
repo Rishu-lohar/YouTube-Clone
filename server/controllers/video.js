@@ -149,6 +149,7 @@ const generatePublicVideoMetadata = async (filename, index) => {
     uploader: slugify(channelName),
     views,
     Like: likeCount,
+    isPremium: index % 4 === 0,
     createdAt: randomDateInPastDays(900),
   };
 };
@@ -189,6 +190,7 @@ const syncPublicVideos = async () => {
             filetype: "video/mp4",
             filesize: String(fileStat.size),
             videotitle: generatePrettyTitle(existing.videochanel, filename),
+            isPremium: index % 4 === 0,
           },
           {
             returnDocument: "after",
@@ -217,6 +219,7 @@ export const uploadvideo = async (req, res) => {
       filesize: req.file.size,
       videochanel: req.body.videochanel,
       uploader: req.body.uploader,
+      isPremium: req.body.isPremium === "true",
     });
 
     await newVideo.save();

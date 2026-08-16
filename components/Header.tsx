@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -16,9 +16,37 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Channeldialogue from "./ChannelDialogue";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/AuthContext";
+import axiosInstance from "@/lib/axiosinstance";
 
 const Header = () => {
   const { user, logout, handlegooglesignin } = useUser();
+
+  const [currentPlan, setCurrentPlan] = useState<
+    "Free" | "Bronze" | "Silver" | "Gold"
+  >("Free");
+  
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!user) return;
+
+      try {
+        const res = await axiosInstance.get(
+          `/subscription/status/${user._id}`
+        );
+
+        if (res.data.subscription) {
+          setCurrentPlan(res.data.subscription.plan);
+        } else {
+          setCurrentPlan("Free");
+        }
+      } catch (error) {
+        console.log(error);
+        setCurrentPlan("Free");
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isdialogeopen, setisdialogeopen] = useState(false);
@@ -97,10 +125,34 @@ const Header = () => {
             <Mic className="w-5 h-5" />
           </Button>
         </form>
+
         {/* Right */}
         <div className="flex items-center gap-2">
           {user ? (
             <>
+
+              {currentPlan !== "Free" ? (
+                <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-yellow-100 border border-yellow-300">
+                  <span className="text-xs font-semibold text-yellow-700">
+                    {currentPlan} Member
+                  </span>
+
+                  <span className="text-[10px] text-green-600">
+                    ✨ Ad-Free
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-gray-100 border">
+                  <span className="text-xs font-semibold text-gray-700">
+                    Free User
+                  </span>
+
+                  <span className="text-[10px] text-red-500">
+                    Ads Enabled
+                  </span>
+                </div>
+              )}
+
               <Button variant="ghost" size="icon">
                 <VideoIcon className="w-6 h-6" />
               </Button>
@@ -171,18 +223,18 @@ const Header = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-        </>
-        ) : (
-        <Button
-          onClick={handlegooglesignin}
-          className="flex items-center gap-2"
-        >
-          <User className="w-4 h-4" />
-          Sign In
-        </Button>
+            </>
+          ) : (
+            <Button
+              onClick={handlegooglesignin}
+              className="flex items-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              Sign In
+            </Button>
           )}
-      </div>
-    </header >
+        </div>
+      </header >
 
       <Channeldialogue
         isopen={isdialogeopen}

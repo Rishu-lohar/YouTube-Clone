@@ -5,6 +5,11 @@ const userschema = new mongoose.Schema({
   channelname: { type: String },
   description: { type: String },
   image: { type: String },
+  plan: {
+    type: String,
+    enum: ["Free", "Bronze", "Silver", "Gold"],
+    default: "Free",
+  },
   joinedon: { type: Date, default: Date.now },
 });
 

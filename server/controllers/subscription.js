@@ -155,6 +155,16 @@ export const verifyPayment = async (req, res) => {
                 expiryDate,
             });
 
+        await user.findByIdAndUpdate(
+            userId,
+            {
+                plan,
+            },
+            {
+                new: true,
+            }
+        );
+
         console.log("Subscription Saved");
 
         const existingUser = await user.findById(userId);

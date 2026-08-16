@@ -14,6 +14,7 @@ import commentroutes from "./routes/comment.js";
 import subscriptionrouters from "./routes/subscription.js";
 
 import downloadRoutes from "./routes/download.js";
+import "./cron/subscriptionCron.js";
 
 dotenv.config();
 

@@ -8,6 +8,7 @@ type RelatedVideo = {
   channel: string;
   views: number;
   videoPath: string;
+  isPremium?: boolean;
 };
 
 type RelatedVideosProps = {
@@ -31,6 +32,12 @@ export default function RelatedVideos({ videos }: RelatedVideosProps) {
                 src={src}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />
+
+              {video.isPremium && (
+                <span className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] font-semibold px-2 py-1 rounded">
+                  🔒 Premium
+                </span>
+              )}
             </div>
 
             <div className="flex-1 min-w-0">

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/lib/AuthContext";
+import ThemeProvider from "@/providers/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,27 +29,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+
+
+        {/* User Context */}
         <UserProvider>
-          {/* Header */}
-          <Header />
 
-          {/* Sidebar + Current Page */}
-          <div className="flex min-h-[calc(100vh-64px)]">
-            <Sidebar />
+          {/* Theme Provider */}
+          <ThemeProvider>
 
-            {/* Current page content */}
-            <main className="flex-1 min-w-0">
-              {children}
-            </main>
-          </div>
+            {/* Header */}
+            <Header />
 
-          {/* Global Toast Notifications */}
-          <Toaster />
+            {/* Sidebar + Current Page */}
+            <div className="flex min-h-[calc(100vh-64px)]">
+              <Sidebar />
+
+              {/* Current Page */}
+              <main className="flex-1 min-w-0">
+                {children}
+              </main>
+            </div>
+
+            {/* Toast */}
+            <Toaster />
+            
+          </ThemeProvider>
         </UserProvider>
+
       </body>
     </html>
   );

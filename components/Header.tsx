@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -130,6 +131,8 @@ const Header = () => {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+
+              <ThemeToggle />
 
               {currentPlan !== "Free" ? (
                 <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-yellow-100 border border-yellow-300">

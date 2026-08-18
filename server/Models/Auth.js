@@ -10,6 +10,13 @@ const userschema = new mongoose.Schema({
     enum: ["Free", "Bronze", "Silver", "Gold"],
     default: "Free",
   },
+
+  theme:{
+    type: String,
+    enum: ["light", "dark"],
+    default: "dark",
+  },
+  
   joinedon: { type: Date, default: Date.now },
 });
 

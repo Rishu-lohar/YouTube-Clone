@@ -15,7 +15,7 @@ export default function VideoThumbnail({
   const [duration, setDuration] = useState<number | null>(null);
 
   return (
-    <div className="relative overflow-hidden rounded-lg bg-gray-100">
+    <div className="relative overflow-hidden rounded-lg bg-muted">
       <video
         src={src || undefined}
         className={className}

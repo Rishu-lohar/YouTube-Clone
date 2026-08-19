@@ -284,7 +284,7 @@ const Comments = ({ videoId }: any) => {
 
         <div className="space-y-4">
           {comments.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">
+            <p className="text-sm text-muted-foreground italic">
               No comments yet. Be the first to comment!
             </p>
           ) : (
@@ -298,7 +298,7 @@ const Comments = ({ videoId }: any) => {
                     <span className="font-medium text-sm">
                       {comment.usercommented}
                     </span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.commentedon))} ago
                     </span>
                   </div>
@@ -333,7 +333,7 @@ const Comments = ({ videoId }: any) => {
                         {translatedComments[comment._id] || comment.commentbody}
                       </p>
 
-                      <div className="flex items-center gap-4 mt-2 text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-muted-foreground">
 
                         <button
                           onClick={() => handleLike(comment._id)}
@@ -387,7 +387,7 @@ const Comments = ({ videoId }: any) => {
                       </div>
 
                       {comment.userid === user?._id && (
-                        <div className="flex gap-2 mt-2 text-sm text-gray-500">
+                        <div className="flex gap-2 mt-2 text-sm text-muted-foreground">
                           <button onClick={() => handleEdit(comment)}>
                             Edit
                           </button>

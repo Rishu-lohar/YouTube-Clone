@@ -46,7 +46,7 @@ const SearchResult = ({ query }: SearchResultProps) => {
   if (!query.trim()) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Enter a search term to find videos and channels.
         </p>
       </div>
@@ -61,7 +61,7 @@ const SearchResult = ({ query }: SearchResultProps) => {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold mb-2">No results found</h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Try different keywords or remove search filters.
         </p>
       </div>
@@ -77,7 +77,7 @@ const SearchResult = ({ query }: SearchResultProps) => {
           return (
             <div key={video._id} className="flex gap-4 group">
               <Link href={`/watch/${video._id}`} className="flex-shrink-0">
-                <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <div className="relative w-80 aspect-video bg-muted rounded-lg overflow-hidden">
                   <VideoThumbnail
                     src={videoSrc}
                     className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
@@ -92,7 +92,7 @@ const SearchResult = ({ query }: SearchResultProps) => {
                   </h3>
                 </Link>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <span>{video.views?.toLocaleString() ?? 0} views</span>
                   <span>•</span>
                   <span>
@@ -112,12 +112,12 @@ const SearchResult = ({ query }: SearchResultProps) => {
                     </AvatarFallback>
                   </Avatar>
 
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     {video.videochanel}
                   </span>
                 </Link>
 
-                <p className="text-sm text-gray-700 line-clamp-2">
+                <p className="text-sm text-foreground line-clamp-2">
                   {video.description || "No description available."}
                 </p>
               </div>
@@ -127,7 +127,7 @@ const SearchResult = ({ query }: SearchResultProps) => {
       </div>
 
       <div className="text-center py-8">
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Showing {videos.length} results for "{query}"
         </p>
       </div>

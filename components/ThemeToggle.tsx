@@ -34,7 +34,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={handleThemeChange}
-      className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+      className="rounded-full p-2 hover:bg-accent transition"
     >
       {theme === "dark" ? (
         <Sun size={22} />

@@ -84,11 +84,11 @@ const ChannelPage = () => {
   );
 
   if (loading) {
-    return <div className="min-h-screen bg-white p-6">Loading...</div>;
+    return <div className="min-h-screen bg-background p-6">Loading...</div>;
   }
 
   return (
-    <div className="flex-1 min-h-screen bg-white">
+    <div className="flex-1 min-h-screen bg-background">
       <ChannelHeader
         channel={{
           id: channelId || "",

@@ -46,14 +46,14 @@ export default function ChannelHeader({
               {channel.channelname}
             </h1>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               @
               {channel.channelname
                 .toLowerCase()
                 .replace(/\s+/g, "")}
             </p>
 
-            <p className="text-sm text-gray-700 max-w-2xl">
+            <p className="text-sm text-foreground max-w-2xl">
               {channel.description}
             </p>
 

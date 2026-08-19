@@ -119,7 +119,7 @@ const VideoUploader = ({
   };
 
   return (
-    <div className="rounded-lg bg-gray-50 p-6">
+    <div className="rounded-lg bg-muted p-6">
       <h2 className="mb-4 text-xl font-semibold">
         Upload a Video
       </h2>
@@ -127,20 +127,20 @@ const VideoUploader = ({
       <div className="space-y-4">
         {!videoFile ? (
           <div
-            className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:bg-gray-100"
+            className="cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:bg-accent"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="mx-auto mb-2 h-12 w-12 text-gray-400" />
+            <Upload className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
 
             <p className="text-lg font-medium">
               Drag & Drop your video
             </p>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               or click to browse
             </p>
 
-            <p className="mt-4 text-xs text-gray-400">
+            <p className="mt-4 text-xs text-muted-foreground">
               MP4, MOV, AVI, WEBM • Max 100MB
             </p>
 
@@ -154,7 +154,7 @@ const VideoUploader = ({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border bg-white p-3">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
               <div className="rounded-md bg-blue-100 p-2">
                 <FileVideo className="h-6 w-6 text-blue-600" />
               </div>
@@ -164,7 +164,7 @@ const VideoUploader = ({
                   {videoFile.name}
                 </p>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {(videoFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>

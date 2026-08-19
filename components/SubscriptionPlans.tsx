@@ -174,7 +174,7 @@ export default function SubscriptionPlans() {
               )}
             </p>
 
-            <ul className="mt-5 space-y-2 text-sm text-gray-600">
+            <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
               {plan.features.map((feature) => (
                 <li key={feature}>✅ {feature}</li>
               ))}

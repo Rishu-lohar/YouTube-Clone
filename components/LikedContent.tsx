@@ -56,11 +56,11 @@ export default function LikedContent() {
   if (!user) {
     return (
       <div className="text-center py-12">
-        <ThumbsUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <ThumbsUp className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-xl font-semibold mb-2">
           Keep track of videos you like
         </h2>
-        <p className="text-gray-600">Sign in to see your liked videos.</p>
+        <p className="text-muted-foreground">Sign in to see your liked videos.</p>
       </div>
     );
   }
@@ -72,9 +72,9 @@ export default function LikedContent() {
   if (likedVideos.length === 0) {
     return (
       <div className="text-center py-12">
-        <ThumbsUp className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+        <ThumbsUp className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-xl font-semibold mb-2">No liked videos yet</h2>
-        <p className="text-gray-600">Videos you like will appear here.</p>
+        <p className="text-muted-foreground">Videos you like will appear here.</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function LikedContent() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600">{likedVideos.length} videos</p>
+        <p className="text-sm text-muted-foreground">{likedVideos.length} videos</p>
         <Button className="flex items-center gap-2">
           <Play className="w-4 h-4" />
           Play all
@@ -97,7 +97,7 @@ export default function LikedContent() {
           return (
             <div key={item._id} className="flex gap-4 group">
               <Link href={`/watch/${video._id}`} className="flex-shrink-0">
-                <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
+                <div className="relative w-40 aspect-video bg-muted rounded overflow-hidden">
                   <VideoThumbnail
                     src={videoSrc}
                     className="object-cover group-hover:scale-105 transition-transform duration-200"
@@ -111,14 +111,14 @@ export default function LikedContent() {
                     {video.videotitle}
                   </h3>
                 </Link>
-                <p className="text-sm text-gray-600">{video.videochanel}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">{video.videochanel}</p>
+                <p className="text-sm text-muted-foreground">
                   {video.views?.toLocaleString() ?? 0} views • {" "}
                   {video.createdAt
                     ? `${formatDistanceToNow(new Date(video.createdAt))} ago`
                     : "Just now"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Liked {item.createdAt
                     ? `${formatDistanceToNow(new Date(item.createdAt))} ago`
                     : "recently"}
@@ -127,7 +127,7 @@ export default function LikedContent() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-100">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent">
                     <MoreVertical className="h-4 w-4" />
                   </div>
                 </DropdownMenuTrigger>

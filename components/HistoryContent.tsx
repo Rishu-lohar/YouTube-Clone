@@ -60,13 +60,13 @@ export default function HistoryContent() {
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+        <Clock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
 
         <h2 className="mb-2 text-xl font-semibold">
           Keep track of what you watch
         </h2>
 
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Watch history isn't viewable when signed out.
         </p>
       </div>
@@ -76,11 +76,11 @@ export default function HistoryContent() {
   if (history.length === 0) {
     return (
       <div className="py-12 text-center">
-        <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+        <Clock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
 
         <h2 className="mb-2 text-xl font-semibold">No watch history yet</h2>
 
-        <p className="text-gray-600">Videos you watch will appear here.</p>
+        <p className="text-muted-foreground">Videos you watch will appear here.</p>
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default function HistoryContent() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">{history.length} videos</p>
+        <p className="text-sm text-muted-foreground">{history.length} videos</p>
       </div>
 
       <div className="space-y-4">
@@ -99,7 +99,7 @@ export default function HistoryContent() {
           return (
             <div key={item._id} className="group flex gap-4">
               <Link href={`/watch/${video._id}`} className="flex-shrink-0">
-                <div className="relative aspect-video w-40 overflow-hidden rounded bg-gray-100">
+                <div className="relative aspect-video w-40 overflow-hidden rounded bg-muted">
                   <VideoThumbnail
                     src={videoSrc}
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
@@ -114,16 +114,16 @@ export default function HistoryContent() {
                   </h3>
                 </Link>
 
-                <p className="text-sm text-gray-600">{video.videochanel}</p>
+                <p className="text-sm text-muted-foreground">{video.videochanel}</p>
 
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {video.views?.toLocaleString() ?? 0} views • {" "}
                   {video.createdAt
                     ? `${formatDistanceToNow(new Date(video.createdAt))} ago`
                     : "Just now"}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Added {item.createdAt
                     ? `${formatDistanceToNow(new Date(item.createdAt))} ago`
                     : "recently"}
@@ -132,7 +132,7 @@ export default function HistoryContent() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-100">
+                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent">
                     <MoreVertical className="h-4 w-4" />
                   </div>
                 </DropdownMenuTrigger>

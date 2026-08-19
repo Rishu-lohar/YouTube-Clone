@@ -20,7 +20,7 @@ export default function ChannelVideos({
   if (videos.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           No videos uploaded yet.
         </p>
       </div>

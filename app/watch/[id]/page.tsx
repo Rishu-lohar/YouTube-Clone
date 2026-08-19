@@ -95,22 +95,22 @@ const WatchPage = () => {
     }));
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
 
             {selectedVideo.isPremium && currentPlan === "Free" ? (
-              <div className="aspect-video rounded-lg border bg-gray-100 flex flex-col items-center justify-center text-center p-8">
+              <div className="aspect-video rounded-lg border border-border bg-muted flex flex-col items-center justify-center text-center p-8">
                 <h2 className="text-3xl font-bold">
                   🔒 Premium Video
                 </h2>
 
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-muted-foreground">
                   This video is available only for Premium users.
                 </p>
 
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Upgrade to Bronze, Silver or Gold to continue watching.
                 </p>
 

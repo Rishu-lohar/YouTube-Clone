@@ -12,11 +12,11 @@ export default function ExplorePage() {
           <Compass size={55} className="text-red-600" />
         </div>
 
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">
+        <h1 className="text-4xl font-bold text-foreground mb-3">
           Explore is Coming Soon 🚀
         </h1>
 
-        <p className="text-gray-500 text-lg mb-8">
+        <p className="text-muted-foreground text-lg mb-8">
           Discover trending videos, gaming, music, news and much more.
           We&apos;re working hard to bring you an amazing Explore experience.
         </p>

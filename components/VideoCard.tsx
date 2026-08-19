@@ -54,11 +54,11 @@ export default function VideoCard({ video }: VideoCardProps) {
               {video?.videotitle}
             </h3>
 
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               {video?.videochanel}
             </p>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {video?.views?.toLocaleString()} views •{" "}
               {video?.createdAt
                 ? `${formatDistanceToNow(new Date(video.createdAt))} ago`

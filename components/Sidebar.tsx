@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Home,
   Compass,
@@ -17,25 +18,37 @@ import { useUser } from "@/lib/AuthContext";
 
 const Sidebar = () => {
   const { user } = useUser();
-
   const [isdialogeopen, setisdialogeopen] = useState(false);
+
   return (
-    <aside className="w-64 bg-white  border-r min-h-screen p-2">
+    <aside className="w-64 bg-background text-foreground border-r border-border min-h-screen p-2">
       <nav className="space-y-1">
+
         <Link href="/">
-          <Button variant="ghost" className="w-full justify-start">
+          <Button
+            variant="ghost"
+            className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+          >
             <Home className="w-5 h-5 mr-3" />
             Home
           </Button>
         </Link>
+
         <Link href="/explore">
-          <Button variant="ghost" className="w-full justify-start">
+          <Button
+            variant="ghost"
+            className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+          >
             <Compass className="w-5 h-5 mr-3" />
             Explore
           </Button>
         </Link>
+
         <Link href="/subscriptions">
-          <Button variant="ghost" className="w-full justify-start">
+          <Button
+            variant="ghost"
+            className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+          >
             <PlaySquare className="w-5 h-5 mr-3" />
             Subscriptions
           </Button>
@@ -43,36 +56,56 @@ const Sidebar = () => {
 
         {user && (
           <>
-            <div className="border-t pt-2 mt-2">
+            <div className="border-t border-border pt-2 mt-2">
+
               <Link href="/history">
-                <Button variant="ghost" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+                >
                   <History className="w-5 h-5 mr-3" />
                   History
                 </Button>
               </Link>
+
               <Link href="/liked">
-                <Button variant="ghost" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+                >
                   <ThumbsUp className="w-5 h-5 mr-3" />
-                  Liked videos
+                  Liked Videos
                 </Button>
               </Link>
+
               <Link href="/watch-later">
-                <Button variant="ghost" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+                >
                   <Clock className="w-5 h-5 mr-3" />
-                  Watch later
+                  Watch Later
                 </Button>
               </Link>
+
               <Link href="/downloads">
-                <Button variant="ghost" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+                >
                   <Download className="w-5 h-5 mr-3" />
                   Downloads
                 </Button>
               </Link>
+
               {user?.channelname ? (
                 <Link href={`/channel/${user._id}`}>
-                  <Button variant="ghost" className="w-full justify-start">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+                  >
                     <User className="w-5 h-5 mr-3" />
-                    Your channel
+                    Your Channel
                   </Button>
                 </Link>
               ) : (
@@ -87,10 +120,12 @@ const Sidebar = () => {
                   </Button>
                 </div>
               )}
+
             </div>
           </>
         )}
       </nav>
+
       <Channeldialogue
         isopen={isdialogeopen}
         onclose={() => setisdialogeopen(false)}

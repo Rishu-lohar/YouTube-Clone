@@ -166,7 +166,7 @@ const VideoInfo = ({ video }: any) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-full bg-gray-100">
+          <div className="flex items-center rounded-full bg-muted">
             <Button
               variant="ghost"
               size="sm"
@@ -174,13 +174,12 @@ const VideoInfo = ({ video }: any) => {
               onClick={handleLike}
             >
               <ThumbsUp
-                className={`mr-2 h-5 w-5 ${isLiked ? "fill-black text-black" : ""
-                  }`}
+                className={`mr-2 h-5 w-5 ${isLiked ? "fill-foreground text-foreground" : ""}`}
               />
               {likes.toLocaleString()}
             </Button>
 
-            <div className="h-6 w-px bg-gray-300" />
+            <div className="h-6 w-px bg-border" />
 
             <Button
               variant="ghost"
@@ -189,8 +188,7 @@ const VideoInfo = ({ video }: any) => {
               onClick={handleDislike}
             >
               <ThumbsDown
-                className={`mr-2 h-5 w-5 ${isDisliked ? "fill-black text-black" : ""
-                  }`}
+                className={`mr-2 h-5 w-5 ${isDisliked ? "fill-foreground text-foreground" : ""}`}
               />
               {dislikes.toLocaleString()}
             </Button>
@@ -199,8 +197,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-full bg-gray-100 ${isWatchLater ? "text-primary" : ""
-              }`}
+            className={`rounded-full bg-muted ${isWatchLater ? "text-primary" : ""}`}
             onClick={handleWatchLater}
           >
             <Clock className="mr-2 h-5 w-5" />
@@ -210,7 +207,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full bg-gray-100"
+            className="rounded-full bg-muted"
           >
             <Share className="mr-2 h-5 w-5" />
             Share
@@ -219,7 +216,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full bg-gray-100"
+            className="rounded-full bg-muted"
             onClick={handleDownload}
           >
             <Download className="mr-2 h-5 w-5" />
@@ -229,14 +226,14 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full bg-gray-100"
+            className="rounded-full bg-muted"
           >
             <MoreHorizontal className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      <div className="rounded-lg bg-gray-100 p-4">
+      <div className="rounded-lg bg-muted p-4">
         <div className="mb-2 flex gap-4 text-sm font-medium">
           <span>{video.views.toLocaleString()} views</span>
 

@@ -12,9 +12,11 @@ export default function ThemeToggle() {
   const handleThemeChange = async () => {
     if (!user) return;
 
-    const newTheme = theme === "dark" ? "light" : "dark";
+    const currentTheme = theme;
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-
+    // Instant UI update
+    setTheme(newTheme);
 
     try {
       const res = await axiosInstance.patch(
@@ -24,17 +26,19 @@ export default function ThemeToggle() {
         }
       );
 
-      setTheme(newTheme);
       login(res.data);
     } catch (error) {
       console.error(error);
+
+      // Backend fail hua to old theme restore
+      setTheme(currentTheme);
     }
   };
 
   return (
     <button
       onClick={handleThemeChange}
-      className="rounded-full p-2 hover:bg-accent transition"
+      className="rounded-full p-2 hover:bg-accent transition-colors"
     >
       {theme === "dark" ? (
         <Sun size={22} />

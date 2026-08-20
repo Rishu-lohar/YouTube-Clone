@@ -19,7 +19,7 @@ function ThemeHandler() {
     if (user?.theme) {
       setTheme(user.theme);
     }
-  }, [user, setTheme]);
+  }, [user]);
 
   return null;
 }
@@ -30,6 +30,7 @@ export default function ThemeProvider({ children }: Props) {
       attribute="class"
       defaultTheme="dark"
       enableSystem={false}
+      disableTransitionOnChange
     >
       <ThemeHandler />
       {children}

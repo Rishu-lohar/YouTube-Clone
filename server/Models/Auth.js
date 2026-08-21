@@ -16,6 +16,37 @@ const userschema = new mongoose.Schema({
     enum: ["light", "dark"],
     default: "dark",
   },
+
+  otp:{
+    type: String,
+    default: null,
+  },
+
+  otpExpiry:{
+    type: Date,
+    default: null,
+  },
+
+  isVerifiedDevice:{
+    type: Boolean,
+    default: false,
+  },  
+
+  lastLoginIP:{
+    type: String,
+    default: "",
+  },
+
+  lastLoginCity:{
+    type: String,
+    default: "",
+  },
+
+  lastLoginState:{
+    type: String,
+    default: "",
+  },
+
   
   joinedon: { type: Date, default: Date.now },
 });

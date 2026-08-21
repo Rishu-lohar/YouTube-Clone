@@ -1,9 +1,24 @@
 import mongoose from "mongoose";
 import User from "../Models/Auth.js";
+import OTPVerification from "../Models/OTPVerification.js";
+import crypto from "crypto";
+import sendEmail from "../utils/sendEmail.js";
 
 // Login/Register User
 export const login = async (req, res) => {
   const { email, name, image } = req.body;
+  const existingUser = await User.findOne({ email });
+
+  // Generate OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+  const expires = new Date(Date.now() + 5*60*1000); // 5 minutes from now
+
+  await OTPVerification.deleteMany({ email });
+  await OTPVerification.create({
+    email,
+    otp,
+    expiresAt: expires,
+  });
 
   try {
     // IST Time

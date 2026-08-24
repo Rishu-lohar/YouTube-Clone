@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/lib/AuthContext";
 import ThemeProvider from "@/providers/ThemeProvider";
+import OTPDialog from "@/components/OTPDialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,9 @@ export default function RootLayout({
 
             {/* Header */}
             <Header />
+
+            {/* OTP Dialog */}
+            <OTPDialog /> 
 
             {/* Sidebar + Current Page */}
             <div className="flex min-h-[calc(100vh-64px)]">

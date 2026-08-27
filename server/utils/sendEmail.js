@@ -1,17 +1,18 @@
 import nodemailer from "nodemailer";
+import "dotenv/config";
 
-// Debug (Temporary)
-console.log("📧 EMAIL_USER:", process.env.EMAIL_USER);
-console.log(
-  "🔑 EMAIL_PASS:",
-  process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌"
-);
+const emailUser = process.env.EMAIL_USER;
+const emailPassword = process.env.EMAIL_PASS;
+
+if (!emailUser || !emailPassword) {
+  throw new Error("EMAIL_USER and EMAIL_PASS must be configured");
+}
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: emailUser,
+    pass: emailPassword.replace(/\s/g, ""),
   },
 });
 
@@ -23,12 +24,10 @@ const sendEmail = async ({
   attachments = [],
 }) => {
   try {
-    // Verify SMTP Connection
     await transporter.verify();
-    console.log("✅ SMTP Server Connected");
 
     await transporter.sendMail({
-      from: `"YouTube Clone" <${process.env.EMAIL_USER}>`,
+      from: `"YouTube Clone" <${emailUser}>`,
       to,
       subject,
       text,
@@ -36,10 +35,9 @@ const sendEmail = async ({
       attachments,
     });
 
-    console.log("✅ Email sent successfully");
   } catch (error) {
-    console.error("❌ Email sending failed");
-    console.error(error);
+    console.error("Email sending failed:", error);
+    throw new Error("Unable to send OTP email", { cause: error });
   }
 };
 

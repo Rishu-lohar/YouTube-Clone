@@ -17,6 +17,7 @@ import downloadRoutes from "./routes/download.js";
 import "./cron/subscriptionCron.js";
 
 dotenv.config();
+console.log("INDEX EMAIL:", process.env.EMAIL_USER);
 
 const app = express();
 

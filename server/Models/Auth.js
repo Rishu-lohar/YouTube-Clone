@@ -32,6 +32,11 @@ const userschema = new mongoose.Schema({
     default: false,
   },  
 
+  lastLoginDevice:{
+    type: String,
+    default: "",
+  },
+
   lastLoginIP:{
     type: String,
     default: "",

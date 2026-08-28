@@ -12,7 +12,7 @@ export default function ThemeToggle() {
   const handleThemeChange = async () => {
     if (!user) return;
 
-    const currentTheme = theme;
+    const currentTheme = theme === "light" ? "light" : "dark";
     const newTheme = currentTheme === "dark" ? "light" : "dark";
 
     // Instant UI update

@@ -6,8 +6,9 @@ import VideoInfo from "@/components/VideoInfo";
 import VideoPlayer from "@/components/VideoPlayer";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+
 
 type VideoItem = {
   _id: string;
@@ -22,6 +23,7 @@ type VideoItem = {
 const WatchPage = () => {
   const params = useParams();
   const id = params?.id as string;
+  const router = useRouter();
 
   const { user } = useUser();
 
@@ -94,6 +96,12 @@ const WatchPage = () => {
       isPremium: video.isPremium,
     }));
 
+  const handleNextVideo = () => {
+    if (relatedVideos.length === 0) return;
+
+    router.push(`/watch/${relatedVideos[0].id}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4">
@@ -122,7 +130,10 @@ const WatchPage = () => {
                 </a>
               </div>
             ) : (
-              <VideoPlayer videoPath={selectedVideo.filepath} />
+              <VideoPlayer
+                videoPath={selectedVideo.filepath}
+                onNext={handleNextVideo}
+              />
             )}
 
             <VideoInfo video={selectedVideo} />

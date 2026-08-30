@@ -30,6 +30,8 @@ export default function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
 
   const handlePlayPause = () => {
     if (!videoRef.current) return;
@@ -124,10 +126,18 @@ export default function VideoPlayer({
         ref={videoRef}
         src={src}
         className="w-full h-full"
+        onLoadStart={() => setIsLoading(true)}
+        onWaiting={() => setIsLoading(true)}
+        onPlaying={() => setIsLoading(false)}
+        onCanPlay={() => setIsLoading(false)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+
         onLoadedMetadata={() => {
           if (videoRef.current) {
             setDuration(videoRef.current.duration);
           }
+          setIsLoading(false);
         }}
         onTimeUpdate={() => {
           if (!videoRef.current) return;
@@ -141,6 +151,12 @@ export default function VideoPlayer({
           );
         }}
       />
+
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
 
       {/* Progress Bar */}
       <div className="absolute bottom-16 left-4 right-4">

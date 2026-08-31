@@ -10,6 +10,7 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 
+
 type VideoItem = {
   _id: string;
   filepath: string;
@@ -23,7 +24,7 @@ type VideoItem = {
 const WatchPage = () => {
   const params = useParams();
   const id = params?.id as string;
-  const router = useRouter();
+  const router = useRouter(); 
 
   const { user } = useUser();
 
@@ -132,7 +133,20 @@ const WatchPage = () => {
             ) : (
               <VideoPlayer
                 videoPath={selectedVideo.filepath}
-                onNext={handleNextVideo}
+                onNext={() => {
+                  const currentIndex = allVideos.findIndex(
+                    (v) => v._id === selectedVideo._id
+                  );
+
+                  if (
+                    currentIndex !== -1 &&
+                    currentIndex < allVideos.length - 1
+                  ) {
+                    router.push(
+                      `/watch/${allVideos[currentIndex + 1]._id}`
+                    );
+                  }
+                }}
               />
             )}
 

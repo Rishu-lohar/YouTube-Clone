@@ -16,6 +16,8 @@ import subscriptionrouters from "./routes/subscription.js";
 import downloadRoutes from "./routes/download.js";
 import "./cron/subscriptionCron.js";
 
+import watchParty from "./routes/watchParty.js";
+
 dotenv.config();
 console.log("INDEX EMAIL:", process.env.EMAIL_USER);
 
@@ -45,6 +47,8 @@ app.use("/history", historyroutes);
 app.use("/comment", commentroutes);
 app.use("/download", downloadRoutes);
 app.use("/subscription", subscriptionrouters);
+
+app.use("/watchparty", watchPartyRoutes);
 
 const PORT = process.env.PORT || 5000;
 

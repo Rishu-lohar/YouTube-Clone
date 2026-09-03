@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 
 
 
+
 type VideoItem = {
   _id: string;
   filepath: string;
@@ -24,7 +25,7 @@ type VideoItem = {
 const WatchPage = () => {
   const params = useParams();
   const id = params?.id as string;
-  const router = useRouter(); 
+  const router = useRouter();
 
   const { user } = useUser();
 
@@ -32,6 +33,8 @@ const WatchPage = () => {
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState("Free");
+  const [joinCode, setJoinCode] = useState("");
+  const [party, setParty] = useState<any>(null);
 
   const fetchVideo = async () => {
     if (!id) return;
@@ -97,10 +100,36 @@ const WatchPage = () => {
       isPremium: video.isPremium,
     }));
 
-  const handleNextVideo = () => {
-    if (relatedVideos.length === 0) return;
+  const handleWatchParty = async () => {
+    try {
+      const res = await axiosInstance.post("/watchparty/create", {
+        hostId: user?._id,
+        videoId: selectedVideo?._id,
+      });
 
-    router.push(`/watch/${relatedVideos[0].id}`);
+      alert(`Room Code: ${res.data.party.roomCode}`);
+
+      router.push(`/watch-party?room=${res.data.party.roomCode}`);
+
+    } catch (error) {
+      console.log(error);
+      alert("Unable to create watch party");
+    }
+  };
+
+  const handleJoinParty = async () => {
+    try {
+      await axiosInstance.post("/watchparty/join", {
+        roomCode: joinCode,
+        userId: user?._id,
+      });
+
+      router.push(`/watch-party?room=${joinCode}`);
+
+    } catch (err) {
+      console.log(err);
+      alert("Unable to join party");
+    }
   };
 
   return (
@@ -149,6 +178,30 @@ const WatchPage = () => {
                 }}
               />
             )}
+
+            <button
+              onClick={handleWatchParty}
+              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+            >
+              🎬 Start Watch Party
+            </button>
+
+            <div className="space-y-3 mt-6">
+              <input
+                type="text"
+                placeholder="Enter Room Code"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
+                className="border rounded-lg px-4 py-2 w-full"
+              />
+
+              <button
+                onClick={handleJoinParty}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+              >
+                Join Party
+              </button>
+            </div>
 
             <VideoInfo video={selectedVideo} />
 

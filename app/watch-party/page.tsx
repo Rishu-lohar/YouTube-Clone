@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
+import { useSearchParams } from "next/navigation";
+
 
 export default function WatchPartyPage() {
+
+  // hooks
   const { user } = useUser();
 
+  //States
   const [roomCode, setRoomCode] = useState("");
   const [party, setParty] = useState<any>(null);
+
+  const searchParams = useSearchParams();
+
+  //url query
+  const room = searchParams.get("room");
 
   const handleCreateParty = async () => {
     try {
@@ -26,6 +36,30 @@ export default function WatchPartyPage() {
       alert("Failed to create party");
     }
   };
+
+  const fetchParty = async () => {
+    if (!room) return;
+
+    try {
+      const res = await axiosInstance.get(`/watchparty/${room}`);
+
+      setParty(res.data.party);
+      setRoomCode(res.data.party.roomCode);
+
+    } catch (error: any) {
+      console.error("Error fetching party:", error);
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong";
+
+      alert(message);
+    }
+  };
+  useEffect(() => {
+    fetchParty();
+  }, [room]);
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 border rounded-lg space-y-6">

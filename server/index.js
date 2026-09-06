@@ -15,8 +15,7 @@ import subscriptionrouters from "./routes/subscription.js";
 
 import downloadRoutes from "./routes/download.js";
 import "./cron/subscriptionCron.js";
-
-import watchParty from "./routes/watchParty.js";
+import watchPartyRoutes from "./routes/watchParty.js";
 
 dotenv.config();
 console.log("INDEX EMAIL:", process.env.EMAIL_USER);

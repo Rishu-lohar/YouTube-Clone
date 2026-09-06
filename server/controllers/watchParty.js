@@ -26,6 +26,8 @@ export const createParty = async (req, res) => {
       participants: [hostId],
     });
 
+    console.log("Party Saved:", party);
+
     return res.status(201).json({
       success: true,
       message: "Watch Party Created",
@@ -79,14 +81,13 @@ export const joinParty = async (req, res) => {
 // Get Party
 export const getParty = async (req, res) => {
   try {
-
     const { roomCode } = req.params;
 
-    const party = await WatchParty
-      .findOne({ roomCode })
-      .populate("host")
-      .populate("participants")
-      .populate("video");
+    console.log("Searching Room:", roomCode);
+
+    const party = await WatchParty.findOne({ roomCode });
+
+    console.log("Found Party:", party);
 
     if (!party) {
       return res.status(404).json({
@@ -95,11 +96,15 @@ export const getParty = async (req, res) => {
       });
     }
 
+    const populatedParty = await WatchParty.findById(party._id)
+      .populate("host")
+      .populate("participants")
+      .populate("video");
+
     return res.status(200).json({
       success: true,
-      party,
+      party: populatedParty,
     });
-
   } catch (error) {
     console.log(error);
 
@@ -129,8 +134,13 @@ export const leaveParty = async (req, res) => {
       (id) => id.toString() !== userId
     );
 
-    await party.save();
+    if (party.participants.length === 0) {
+      await WatchParty.deleteOne({ _id: party._id });
+    } else {
+      await party.save();
+    }
 
+    
     return res.status(200).json({
       success: true,
       message: "Left Party Successfully",

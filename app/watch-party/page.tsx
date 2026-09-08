@@ -6,6 +6,8 @@ import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 import WatchPartyChat from "@/components/WatchPartyChat";
 import CallControls from "@/components/CallControls";
+import VideoPlayer from "@/components/VideoPlayer";
+import socket from "@/lib/socket";
 
 export default function WatchPartyPage() {
   const { user } = useUser();
@@ -34,9 +36,38 @@ export default function WatchPartyPage() {
     }
   };
 
+  // Fetch Party
   useEffect(() => {
     fetchParty();
   }, [room]);
+
+
+  // Socket Connection
+  useEffect(() => {
+    if (!room || !user) return;
+
+    socket.connect();
+
+    socket.emit("join-room", {
+      roomCode: room,
+      userId: user._id,
+    });
+
+    socket.on("participant-joined", () => {
+      fetchParty(); // Refresh participants
+    });
+
+    socket.on("participant-left", () => {
+      fetchParty();
+    });
+
+    return () => {
+      socket.off("participant-joined");
+      socket.off("participant-left");
+      socket.disconnect();
+    };
+  }, [room, user]);
+
 
   if (loading) {
     return (
@@ -65,17 +96,21 @@ export default function WatchPartyPage() {
 
   const handleLeaveParty = async () => {
     try {
+      socket.emit("leave-room", {
+        roomCode: room,
+        userId: user?._id,
+      });
+
       await axiosInstance.post("/watchparty/leave", {
         roomCode: room,
         userId: user?._id,
       });
 
-      alert("Left Watch Party");
+      socket.disconnect();
 
       router.push("/");
     } catch (error) {
       console.log(error);
-      alert("Unable to leave party");
     }
   };
 
@@ -86,49 +121,40 @@ export default function WatchPartyPage() {
         🎬 Watch Party
       </h1>
 
-      {/* Party Details */}
       <div className="border rounded-xl p-6 space-y-4">
 
         <div>
-          <span className="font-semibold">
-            Room Code :
-          </span>{" "}
+          <span className="font-semibold">Room Code :</span>{" "}
           {party.roomCode}
         </div>
 
         <div>
-          <span className="font-semibold">
-            Host :
-          </span>{" "}
+          <span className="font-semibold">Host :</span>{" "}
           {party.host?.name || party.host}
         </div>
 
         <div>
-          <span className="font-semibold">
-            Participants :
-          </span>{" "}
+          <span className="font-semibold">Participants :</span>{" "}
           {party.participants?.length}
         </div>
 
-
-
         <div>
-          <span className="font-semibold">
-            Video :
-          </span>{" "}
+          <span className="font-semibold">Video :</span>{" "}
           {party.video?.videotitle}
         </div>
 
         <div>
-          <span className="font-semibold">
-            Status :
-          </span>{" "}
-          🟢 Live
+          <span className="font-semibold">Status :</span> 🟢 Live
         </div>
 
       </div>
 
-      {/* Participants */}
+      {party.video && (
+        <div className="mt-8">
+          <VideoPlayer videoPath={party.video.filepath} />
+        </div>
+      )}
+
       <div className="border rounded-xl p-6 mt-6">
         <h2 className="text-2xl font-semibold mb-4">
           👥 Participants
@@ -175,9 +201,12 @@ export default function WatchPartyPage() {
         )}
       </div>
 
-      <WatchPartyChat />
+      <WatchPartyChat
+        roomCode={party.roomCode}
+        username={user?.name || "Guest"}
+      />
 
-      <CallControls />
+
 
       <div className="mt-8 flex justify-end">
         <button

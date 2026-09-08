@@ -1,27 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import socket from "@/lib/socket";
 
-export default function WatchPartyChat() {
+interface Props {
+  roomCode: string;
+  username: string;
+}
+
+interface Message {
+  sender: string;
+  text: string;
+}
+
+export default function WatchPartyChat({
+  roomCode,
+  username,
+}: Props) {
   const [message, setMessage] = useState("");
 
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     {
       sender: "Host",
       text: "Welcome to the Watch Party 🎉",
     },
   ]);
 
+  useEffect(() => {
+    socket.on("receive-message", (data: Message) => {
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      socket.off("receive-message");
+    };
+  }, []);
+
   const handleSend = () => {
     if (!message.trim()) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: "You",
-        text: message,
-      },
-    ]);
+    socket.emit("send-message", {
+      roomCode,
+      sender: username,
+      text: message,
+    });
 
     setMessage("");
   };
@@ -55,10 +77,13 @@ export default function WatchPartyChat() {
           type="text"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) =>
-            setMessage(e.target.value)
-          }
+          onChange={(e) => setMessage(e.target.value)}
           className="flex-1 border rounded-lg px-4 py-2"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSend();
+            }
+          }}
         />
 
         <button

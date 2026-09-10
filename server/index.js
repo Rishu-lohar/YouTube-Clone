@@ -90,6 +90,22 @@ io.on("connection", (socket) => {
     io.to(data.roomCode).emit("receive-message", data);
   });
 
+  // WebRTC Offer
+  socket.on("offer", ({ roomCode, offer }) => {
+    socket.to(roomCode).emit("offer", offer);
+  });
+
+  // WebRTC Answer
+  socket.on("answer", ({ roomCode, answer }) => {
+    socket.to(roomCode).emit("answer", answer);
+  });
+
+  // ICE Candidate
+  socket.on("ice-candidate", ({ roomCode, candidate }) => {
+    socket.to(roomCode).emit("ice-candidate", candidate);
+  });
+
+
   // Disconnect
   socket.on("disconnect", () => {
     console.log("❌ User Disconnected:", socket.id);

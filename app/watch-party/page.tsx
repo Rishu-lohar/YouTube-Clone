@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 import WatchPartyChat from "@/components/WatchPartyChat";
-import CallControls from "@/components/CallControls";
 import VideoPlayer from "@/components/VideoPlayer";
 import socket from "@/lib/socket";
 
 export default function WatchPartyPage() {
+
   const { user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,20 +19,89 @@ export default function WatchPartyPage() {
   const [party, setParty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  const peerConnection = useRef<RTCPeerConnection | null>(null);
+  const localStream = useRef<MediaStream | null>(null);
+
+  const configuration = {
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302",
+      },
+    ],
+  };
+
+  const startLocalStream = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      localStream.current = stream;
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const createPeerConnection = () => {
+
+    peerConnection.current = new RTCPeerConnection(configuration);
+
+    localStream.current?.getTracks().forEach((track) => {
+      peerConnection.current?.addTrack(track, localStream.current!);
+    });
+
+    peerConnection.current.ontrack = (event) => {
+
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+
+    };
+
+    peerConnection.current.onicecandidate = (event) => {
+
+      if (event.candidate) {
+
+        socket.emit("ice-candidate", {
+          roomCode: room,
+          candidate: event.candidate,
+        });
+
+      }
+
+    };
+
+  };
+
   const fetchParty = async () => {
+
     if (!room) {
       setLoading(false);
       return;
     }
 
     try {
+
       const res = await axiosInstance.get(`/watchparty/${room}`);
+
       setParty(res.data.party);
-    } catch (error) {
-      console.log(error);
-      alert("Unable to load Watch Party");
+
+    } catch (err) {
+
+      console.log(err);
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
@@ -42,32 +111,103 @@ export default function WatchPartyPage() {
   }, [room]);
 
 
-  // Socket Connection
+  // Socket + WebRTC
   useEffect(() => {
     if (!room || !user) return;
 
-    socket.connect();
+    const init = async () => {
+      socket.connect();
 
-    socket.emit("join-room", {
-      roomCode: room,
-      userId: user._id,
+      await startLocalStream();
+
+      createPeerConnection();
+
+      socket.emit("join-room", {
+        roomCode: room,
+        userId: user._id,
+      });
+
+      // HOST creates offer
+      if (party?.host?._id === user._id) {
+        const offer = await peerConnection.current!.createOffer();
+
+        await peerConnection.current!.setLocalDescription(offer);
+
+        socket.emit("offer", {
+          roomCode: room,
+          offer,
+        });
+      }
+    };
+
+    init();
+
+
+    // Receive Offer
+    socket.on("offer", async (offer) => {
+
+      if (!peerConnection.current) return;
+
+      await peerConnection.current.setRemoteDescription(
+        new RTCSessionDescription(offer)
+      );
+
+      const answer = await peerConnection.current.createAnswer();
+
+      await peerConnection.current.setLocalDescription(answer);
+
+      socket.emit("answer", {
+        roomCode: room,
+        answer,
+      });
     });
 
-    socket.on("participant-joined", () => {
-      fetchParty(); // Refresh participants
+    // Receive Answer
+    socket.on("answer", async (answer) => {
+
+      if (!peerConnection.current) return;
+
+      await peerConnection.current.setRemoteDescription(
+        new RTCSessionDescription(answer)
+      );
     });
 
-    socket.on("participant-left", () => {
-      fetchParty();
+    // Receive ICE Candidate
+    socket.on("ice-candidate", async (candidate) => {
+
+      if (!peerConnection.current) return;
+
+      try {
+        await peerConnection.current.addIceCandidate(
+          new RTCIceCandidate(candidate)
+        );
+      } catch (err) {
+        console.log(err);
+      }
     });
+
+    socket.on("participant-joined", fetchParty);
+
+    socket.on("participant-left", fetchParty);
 
     return () => {
+
+      socket.off("offer");
+      socket.off("answer");
+      socket.off("ice-candidate");
       socket.off("participant-joined");
       socket.off("participant-left");
+
+      localStream.current?.getTracks().forEach(track => track.stop());
+
+      const screenStream = useRef<MediaStream | null>(null);
+
+      peerConnection.current?.close();
+
       socket.disconnect();
     };
-  }, [room, user]);
 
+  }, [room, user]);
 
   if (loading) {
     return (
@@ -79,14 +219,12 @@ export default function WatchPartyPage() {
 
   if (!party) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen gap-4">
-        <h1 className="text-3xl font-bold">
-          Watch Party Not Found
-        </h1>
+      <div className="flex flex-col items-center justify-center h-screen gap-5">
+        <h1 className="text-3xl font-bold">Watch Party Not Found</h1>
 
         <button
           onClick={() => router.push("/")}
-          className="bg-red-600 text-white px-5 py-2 rounded-lg"
+          className="bg-red-600 text-white px-6 py-2 rounded-lg"
         >
           Go Home
         </button>
@@ -106,117 +244,158 @@ export default function WatchPartyPage() {
         userId: user?._id,
       });
 
+      localStream.current?.getTracks().forEach((track) => track.stop());
+
+      peerConnection.current?.close();
+
       socket.disconnect();
 
       router.push("/");
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const startScreenShare = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      });
+
+      screenStream.current = stream;
+
+      const screenTrack = stream.getVideoTracks()[0];
+
+      const sender = peerConnection.current
+        ?.getSenders()
+        .find((s) => s.track?.kind === "video");
+
+      if (sender) {
+        sender.replaceTrack(screenTrack);
+      }
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      screenTrack.onended = () => {
+        if (!localStream.current) return;
+
+        const cameraTrack = localStream.current.getVideoTracks()[0];
+
+        sender?.replaceTrack(cameraTrack);
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream.current;
+        }
+      };
+    } catch (err) {
+      console.log(err);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
+    <div className="max-w-6xl mx-auto p-8">
 
-      <h1 className="text-4xl font-bold mb-8">
+      <h1 className="text-4xl font-bold mb-6">
         🎬 Watch Party
       </h1>
 
-      <div className="border rounded-xl p-6 space-y-4">
+      <div className="border rounded-xl p-6 space-y-3">
 
-        <div>
-          <span className="font-semibold">Room Code :</span>{" "}
+        <p>
+          <span className="font-semibold">Room :</span>{" "}
           {party.roomCode}
-        </div>
+        </p>
 
-        <div>
+        <p>
           <span className="font-semibold">Host :</span>{" "}
-          {party.host?.name || party.host}
-        </div>
+          {party.host?.name}
+        </p>
 
-        <div>
+        <p>
           <span className="font-semibold">Participants :</span>{" "}
           {party.participants?.length}
-        </div>
+        </p>
 
-        <div>
+        <p>
           <span className="font-semibold">Video :</span>{" "}
           {party.video?.videotitle}
-        </div>
-
-        <div>
-          <span className="font-semibold">Status :</span> 🟢 Live
-        </div>
+        </p>
 
       </div>
 
       {party.video && (
         <div className="mt-8">
-          <VideoPlayer videoPath={party.video.filepath} />
+          <VideoPlayer
+            videoPath={party.video.filepath}
+          />
         </div>
       )}
 
-      <div className="border rounded-xl p-6 mt-6">
-        <h2 className="text-2xl font-semibold mb-4">
-          👥 Participants
-        </h2>
+      <div className="grid md:grid-cols-2 gap-6 mt-8">
 
-        {party.participants?.length > 0 ? (
-          <div className="space-y-3">
-            {party.participants.map((participant: any) => (
-              <div
-                key={participant._id}
-                className="flex items-center justify-between border rounded-lg p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src={
-                      participant.image ||
-                      "https://github.com/shadcn.png"
-                    }
-                    alt={participant.name}
-                    className="w-12 h-12 rounded-full"
-                  />
+        <div>
 
-                  <div>
-                    <h3 className="font-semibold">
-                      {participant.name}
-                    </h3>
+          <h2 className="font-bold mb-3">
+            📷 My Camera
+          </h2>
 
-                    <p className="text-sm text-gray-500">
-                      {participant.email}
-                    </p>
-                  </div>
-                </div>
+          <video
+            ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className="rounded-xl bg-black w-full h-72"
+          />
 
-                {participant._id === party.host?._id && (
-                  <span className="bg-red-600 text-white text-xs px-3 py-1 rounded-full">
-                    Host
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No Participants Yet.</p>
-        )}
+        </div>
+
+        <div>
+
+          <h2 className="font-bold mb-3">
+            👥 Remote User
+          </h2>
+
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="rounded-xl bg-black w-full h-72"
+          />
+
+        </div>
+
       </div>
 
-      <WatchPartyChat
-        roomCode={party.roomCode}
-        username={user?.name || "Guest"}
-      />
+      <div className="mt-8">
 
+        <WatchPartyChat
+          roomCode={party.roomCode}
+          username={user?.name || "Guest"}
+        />
 
+      </div>
 
       <div className="mt-8 flex justify-end">
+
         <button
           onClick={handleLeaveParty}
           className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg"
         >
           🚪 Leave Party
         </button>
+
+        <button
+          onClick={startScreenShare}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
+        >
+          🖥 Share Screen
+        </button>
+
       </div>
 
     </div>
   );
 }
+

@@ -19,6 +19,9 @@ export default function WatchPartyPage() {
   const [party, setParty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [isMuted, setIsMuted] = useState(false);
+  const [cameraOff, setCameraOff] = useState(false);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -294,6 +297,19 @@ export default function WatchPartyPage() {
     }
   };
 
+  const toggleMute = () => {
+    if (!localStream.current) return;
+
+    const audioTrack = localStream.current.getAudioTracks()[0];
+
+    if (!audioTrack) return;
+
+    audioTrack.enabled = !audioTrack.enabled;
+
+    setIsMuted(!audioTrack.enabled);
+  };   
+  
+  
   return (
     <div className="max-w-6xl mx-auto p-8">
 

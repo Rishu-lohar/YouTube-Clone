@@ -10,7 +10,7 @@ const watchPartySchema = new mongoose.Schema(
 
     host: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
       required: true,
     },
 
@@ -23,7 +23,7 @@ const watchPartySchema = new mongoose.Schema(
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "user",
       },
     ],
   },

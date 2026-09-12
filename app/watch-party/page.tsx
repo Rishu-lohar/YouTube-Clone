@@ -28,6 +28,9 @@ export default function WatchPartyPage() {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localStream = useRef<MediaStream | null>(null);
 
+  const screenStream = useRef<MediaStream | null>(null);
+
+
   const configuration = {
     iceServers: [
       {
@@ -201,9 +204,12 @@ export default function WatchPartyPage() {
       socket.off("participant-joined");
       socket.off("participant-left");
 
+      // Camera + Mic stop
       localStream.current?.getTracks().forEach(track => track.stop());
 
-      const screenStream = useRef<MediaStream | null>(null);
+      // Screen sharing stop
+      screenStream.current?.getTracks().forEach((track) => track.stop());
+
 
       peerConnection.current?.close();
 
@@ -248,6 +254,7 @@ export default function WatchPartyPage() {
       });
 
       localStream.current?.getTracks().forEach((track) => track.stop());
+      screenStream.current?.getTracks().forEach((track) => track.stop());
 
       peerConnection.current?.close();
 
@@ -307,9 +314,21 @@ export default function WatchPartyPage() {
     audioTrack.enabled = !audioTrack.enabled;
 
     setIsMuted(!audioTrack.enabled);
-  };   
-  
-  
+  };
+
+  const toggleCamera = () => {
+    if (!localStream.current) return;
+
+    const videoTrack = localStream.current.getVideoTracks()[0];
+
+    if (!videoTrack) return;
+
+    videoTrack.enabled = !videoTrack.enabled;
+
+    setCameraOff(!videoTrack.enabled);
+  };
+
+
   return (
     <div className="max-w-6xl mx-auto p-8">
 
@@ -393,7 +412,7 @@ export default function WatchPartyPage() {
 
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-end gap-3">
 
         <button
           onClick={handleLeaveParty}
@@ -408,6 +427,21 @@ export default function WatchPartyPage() {
         >
           🖥 Share Screen
         </button>
+
+        <button
+          onClick={toggleMute}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg"
+        >
+          {isMuted ? "🎤 Unmute" : "🔇 Mute"}
+        </button>
+
+        <button
+          onClick={toggleCamera}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+        >
+          {cameraOff ? "📷 Camera On" : "📷 Camera Off"}
+        </button>
+
 
       </div>
 

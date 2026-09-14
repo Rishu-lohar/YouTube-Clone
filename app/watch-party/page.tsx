@@ -21,6 +21,7 @@ export default function WatchPartyPage() {
 
   const [isMuted, setIsMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
+  const [isRemoteUpdate, setIsRemoteUpdate] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -192,6 +193,36 @@ export default function WatchPartyPage() {
       }
     });
 
+    socket.on("video-sync", (data) => {
+      setIsRemoteUpdate(true);
+
+      const video = document.querySelector(
+        "[data-watch-party-video]"
+      ) as HTMLVideoElement | null;
+
+      if (!video) {
+        setIsRemoteUpdate(false);
+        return;
+      }
+
+      if (data.action === "play") {
+        video.play().catch((err) => console.log(err));
+      }
+
+      if (data.action === "pause") {
+        video.pause();
+      }
+
+      if (data.action === "seek") {
+        video.currentTime = data.time;
+      }
+
+      setTimeout(() => {
+        setIsRemoteUpdate(false);
+      }, 100);
+    });
+
+
     socket.on("participant-joined", fetchParty);
 
     socket.on("participant-left", fetchParty);
@@ -201,6 +232,7 @@ export default function WatchPartyPage() {
       socket.off("offer");
       socket.off("answer");
       socket.off("ice-candidate");
+      socket.off("video-sync");
       socket.off("participant-joined");
       socket.off("participant-left");
 
@@ -336,7 +368,7 @@ export default function WatchPartyPage() {
         🎬 Watch Party
       </h1>
 
-      <div className="border rounded-xl p-6 space-y-3">
+      <div className="border rounded-xl p-6 space-y-4">
 
         <p>
           <span className="font-semibold">Room :</span>{" "}
@@ -349,9 +381,27 @@ export default function WatchPartyPage() {
         </p>
 
         <p>
-          <span className="font-semibold">Participants :</span>{" "}
-          {party.participants?.length}
+          <span className="font-semibold">
+            Participants ({party.participants?.length || 0})
+          </span>
         </p>
+
+        <div className="space-y-2">
+          {party.participants?.map((participant: any) => (
+            <div
+              key={participant._id}
+              className="flex items-center justify-between border rounded-lg px-4 py-2"
+            >
+              <span>{participant.name}</span>
+
+              {participant._id === party.host?._id && (
+                <span className="text-sm font-semibold text-yellow-600">
+                  👑 Host
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
 
         <p>
           <span className="font-semibold">Video :</span>{" "}
@@ -364,6 +414,26 @@ export default function WatchPartyPage() {
         <div className="mt-8">
           <VideoPlayer
             videoPath={party.video.filepath}
+            onPlay={() =>
+              socket.emit("video-sync", {
+                roomCode: room,
+                action: "play",
+              })
+            }
+            onPause={() =>
+              socket.emit("video-sync", {
+                roomCode: room,
+                action: "pause",
+              })
+            }
+            onSeek={(time) =>
+              socket.emit("video-sync", {
+                roomCode: room,
+                action: "seek",
+                time,
+              })
+            }
+            isRemoteUpdate={isRemoteUpdate}
           />
         </div>
       )}

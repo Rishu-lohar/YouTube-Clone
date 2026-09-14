@@ -25,7 +25,7 @@ const Header = () => {
   const [currentPlan, setCurrentPlan] = useState<
     "Free" | "Bronze" | "Silver" | "Gold"
   >("Free");
-  
+
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!user) return;
@@ -66,6 +66,37 @@ const Header = () => {
     if (e.key === "Enter") {
       handleSearch(e as any);
     }
+  };
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice search is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+
+      setSearchQuery(text);
+
+      router.push(`/search?q=${encodeURIComponent(text)}`);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.log("Voice search error:", event.error);
+    };
+
+    recognition.start();
   };
 
   return (
@@ -119,9 +150,11 @@ const Header = () => {
           </div>
 
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="rounded-full"
+            onClick={handleVoiceSearch}
           >
             <Mic className="w-5 h-5" />
           </Button>
@@ -156,7 +189,12 @@ const Header = () => {
                 </div>
               )}
 
-              <Button variant="ghost" size="icon">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/upload")}
+                title="Upload Video"
+              >
                 <VideoIcon className="w-6 h-6" />
               </Button>
 

@@ -105,6 +105,10 @@ io.on("connection", (socket) => {
     socket.to(roomCode).emit("ice-candidate", candidate);
   });
 
+  socket.on("video-sync", (data) => {
+    socket.to(data.roomCode).emit("video-sync", data);
+  });
+
 
   // Disconnect
   socket.on("disconnect", () => {

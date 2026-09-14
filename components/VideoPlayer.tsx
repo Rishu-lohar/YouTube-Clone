@@ -17,11 +17,19 @@ import { getVideoSrc } from "@/lib/videoSrc";
 type VideoPlayerProps = {
   videoPath: string;
   onNext?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onSeek?: (time: number) => void;
+  isRemoteUpdate?: boolean;
 };
 
 export default function VideoPlayer({
   videoPath,
   onNext,
+  onPlay,
+  onPause,
+  onSeek,
+  isRemoteUpdate = false,
 }: VideoPlayerProps) {
   const src = getVideoSrc(videoPath);
 
@@ -45,13 +53,19 @@ export default function VideoPlayer({
     if (videoRef.current.paused) {
       try {
         await videoRef.current.play();
-      }
-      catch (err) {
+
+        if (!isRemoteUpdate && onPlay) {
+          onPlay();
+        }
+      } catch (err) {
         console.log(err);
       }
-    }
-    else {
+    } else {
       videoRef.current.pause();
+
+      if (!isRemoteUpdate && onPause) {
+        onPause();
+      }
     }
   };
 
@@ -71,12 +85,16 @@ export default function VideoPlayer({
 
     const value = Number(e.target.value);
 
-    videoRef.current.currentTime =
-      (value / 100) * duration;
+    const newTime = (value / 100) * duration;
+
+    videoRef.current.currentTime = newTime;
 
     setProgress(value);
-  };
 
+    if (!isRemoteUpdate && onSeek) {
+      onSeek(newTime);
+    }
+  };
   const handleBackward = () => {
     if (!videoRef.current) return;
 
@@ -233,6 +251,7 @@ export default function VideoPlayer({
 
       <video
         ref={videoRef}
+        data-watch-party-video
         src={src}
         className="w-full h-full"
 

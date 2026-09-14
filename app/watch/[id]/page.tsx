@@ -179,6 +179,10 @@ const WatchPage = () => {
               />
             )}
 
+
+            <VideoInfo video={selectedVideo} />
+
+            
             <button
               onClick={handleWatchParty}
               className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
@@ -202,8 +206,6 @@ const WatchPage = () => {
                 Join Party
               </button>
             </div>
-
-            <VideoInfo video={selectedVideo} />
 
             <Comments videoId={id} />
           </div>

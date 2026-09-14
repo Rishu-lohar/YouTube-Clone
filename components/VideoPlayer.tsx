@@ -242,6 +242,10 @@ export default function VideoPlayer({
       clickTimeout.current = null;
     }, 250);
   };
+
+  const stopPropagation = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
   return (
     <div
       className="relative aspect-video bg-black rounded-lg overflow-hidden"
@@ -300,6 +304,8 @@ export default function VideoPlayer({
           min="0"
           max="100"
           value={progress}
+          onMouseDown={stopPropagation}
+          onClick={stopPropagation}
           onChange={handleSeek}
           className="w-full cursor-pointer"
         />
@@ -307,7 +313,10 @@ export default function VideoPlayer({
 
       {onNext && (
         <button
-          onClick={onNext}
+          onClick={(event) => {
+            stopPropagation(event);
+            onNext();
+          }}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
         >
           Next Video ▶
@@ -319,7 +328,10 @@ export default function VideoPlayer({
 
         {/* Backward */}
         <button
-          onClick={handleBackward}
+          onClick={(event) => {
+            stopPropagation(event);
+            handleBackward();
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           <RotateCcw size={20} />
@@ -327,7 +339,10 @@ export default function VideoPlayer({
 
         {/* Play */}
         <button
-          onClick={handlePlayPause}
+          onClick={(event) => {
+            stopPropagation(event);
+            handlePlayPause();
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           {isPlaying ? (
@@ -339,7 +354,10 @@ export default function VideoPlayer({
 
         {/* Forward */}
         <button
-          onClick={handleForward}
+          onClick={(event) => {
+            stopPropagation(event);
+            handleForward();
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           <RotateCw size={20} />
@@ -355,7 +373,10 @@ export default function VideoPlayer({
 
         {/* Mute */}
         <button
-          onClick={handleMute}
+          onClick={(event) => {
+            stopPropagation(event);
+            handleMute();
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           {isMuted ? (
@@ -372,13 +393,21 @@ export default function VideoPlayer({
           max="1"
           step="0.1"
           value={volume}
-          onChange={handleVolume}
+          onMouseDown={stopPropagation}
+          onClick={stopPropagation}
+          onChange={(event) => {
+            stopPropagation(event);
+            handleVolume(event);
+          }}
           className="w-24 cursor-pointer"
         />
 
         {/* Fullscreen */}
         <button
-          onClick={handleFullscreen}
+          onClick={(event) => {
+            stopPropagation(event);
+            handleFullscreen();
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           <Maximize size={20} />
@@ -386,7 +415,12 @@ export default function VideoPlayer({
 
         {/* SkipForward */}
         <button
-          onClick={onNext}
+          onClick={(event) => {
+            stopPropagation(event);
+            if (onNext) {
+              onNext();
+            }
+          }}
           className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
         >
           <SkipForward size={20} />

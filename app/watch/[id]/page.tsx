@@ -34,7 +34,6 @@ const WatchPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState("Free");
   const [joinCode, setJoinCode] = useState("");
-  const [party, setParty] = useState<any>(null);
 
   const fetchVideo = async () => {
     if (!id) return;
@@ -77,8 +76,14 @@ const WatchPage = () => {
   };
 
   useEffect(() => {
-    fetchVideo();
-    fetchSubscription();
+    const timeoutId = window.setTimeout(() => {
+      void fetchVideo();
+      void fetchSubscription();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [id, user]);
 
   if (loading) {
@@ -102,7 +107,7 @@ const WatchPage = () => {
 
   const handleWatchParty = async () => {
     try {
-      const res = await axiosInstance.post("/watchparty/create", {
+      const res = await axiosInstance.post("/watch-party/create", {
         hostId: user?._id,
         videoId: selectedVideo?._id,
       });
@@ -119,7 +124,7 @@ const WatchPage = () => {
 
   const handleJoinParty = async () => {
     try {
-      await axiosInstance.post("/watchparty/join", {
+      await axiosInstance.post("/watch-party/join", {
         roomCode: joinCode,
         userId: user?._id,
       });

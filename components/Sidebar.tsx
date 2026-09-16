@@ -16,12 +16,21 @@ import { Button } from "./ui/button";
 import Channeldialogue from "./ChannelDialogue";
 import { useUser } from "@/lib/AuthContext";
 
-const Sidebar = () => {
+const Sidebar = ({
+  isOpen,
+}: {
+  isOpen: boolean;
+}) => {
   const { user } = useUser();
   const [isdialogeopen, setisdialogeopen] = useState(false);
 
   return (
-    <aside className="w-64 bg-background text-foreground border-r border-border min-h-screen p-2">
+    <aside
+      className={`${isOpen
+          ? "w-64 p-2 border-r border-border"
+          : "w-0 p-0 border-r-0"
+        } bg-background text-foreground min-h-screen overflow-hidden transition-all duration-200`}
+    >
       <nav className="space-y-1">
 
         <Link href="/">

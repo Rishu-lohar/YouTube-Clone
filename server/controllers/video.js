@@ -256,3 +256,56 @@ export const getallvideo = async (req, res) => {
     });
   }
 };
+
+// Report Video
+export const reportVideo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userid, reason } = req.body;
+
+    const existingVideo = await video.findById(id);
+
+    if (!existingVideo) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found",
+      });
+    }
+
+    const alreadyReported = existingVideo.reported?.find(
+      (report) => report.user.toString() === userid
+    );
+
+    if (alreadyReported) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reported this video",
+      });
+    }
+
+    existingVideo.reported.push({
+      user: userid,
+      reason: reason || "Reported",
+    });
+
+    if (existingVideo.reported.length >= 5) {
+      existingVideo.status = "flagged";
+    }
+
+    await existingVideo.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Video reported successfully",
+      reports: existingVideo.reported.length,
+      status: existingVideo.status,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};

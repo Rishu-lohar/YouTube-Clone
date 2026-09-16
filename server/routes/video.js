@@ -2,6 +2,7 @@ import express from "express";
 import {
   uploadvideo,
   getallvideo,
+  reportVideo,
 } from "../controllers/video.js";
 
 import upload from "../filehelper/filehelper.js";
@@ -15,5 +16,6 @@ router.post(
 );
 
 router.get("/getall", getallvideo);
+router.put("/report/:id", reportVideo);
 
 export default router;

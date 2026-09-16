@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Clock,
@@ -25,8 +25,16 @@ const VideoInfo = ({ video }: any) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isWatchLater, setIsWatchLater] = useState(false);
-
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [notInterested, setNotInterested] = useState(false);
+
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
 
   useEffect(() => {
     setLikes(video?.Like || 0);
@@ -110,6 +118,89 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
+  const fetchSubscriptionStatus = async () => {
+    if (!user || !video?.uploader) {
+      setIsSubscribed(false);
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.get(
+        `/channel-subscription/status?subscriberId=${user._id}&channelId=${video.uploader}`
+      );
+
+      setIsSubscribed(res.data.subscribed);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchSubscriberCount = async () => {
+    if (!video?.uploader) return;
+
+    try {
+      const res = await axiosInstance.get(
+        `/channel-subscription/count/${video.uploader}`
+      );
+
+      setSubscriberCount(res.data.count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscriptionStatus();
+    fetchSubscriberCount();
+  }, [user, video]);
+
+  const handleSubscribe = async () => {
+    if (!user) {
+      alert("Please login to subscribe");
+      return;
+    }
+
+    if (!video?.uploader) {
+      alert("Channel information not available");
+      return;
+    }
+
+    try {
+      if (isSubscribed) {
+        const res = await axiosInstance.post(
+          "/channel-subscription/unsubscribe",
+          {
+            subscriberId: user._id,
+            channelId: video.uploader,
+          }
+        );
+
+        setIsSubscribed(false);
+        setSubscriberCount((prev) => Math.max(0, prev - 1));
+        alert(res.data.message);
+      } else {
+        const res = await axiosInstance.post(
+          "/channel-subscription/subscribe",
+          {
+            subscriberId: user._id,
+            channelId: video.uploader,
+          }
+        );
+
+        setIsSubscribed(true);
+        setSubscriberCount((prev) => prev + 1);
+        alert(res.data.message);
+      }
+    } catch (error: any) {
+      console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Something went wrong"
+      );
+    }
+  };
+
   const handleWatchLater = async () => {
     if (!user) return;
 
@@ -121,6 +212,79 @@ const VideoInfo = ({ video }: any) => {
       setIsWatchLater(res.data.watchlater);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowMoreMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+
+  // handleShare
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/watch/${video._id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: video.videotitle,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("Video link copied!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!user) {
+      alert("Please login to report this video");
+      return;
+    }
+
+    if (!reportReason) {
+      alert("Please select a reason");
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.put(
+        `/video/report/${video._id}`,
+        {
+          userid: user._id,
+          reason: reportReason,
+        }
+      );
+
+      if (res.data.success) {
+        alert("Video Reported Successfully");
+        setReportOpen(false);
+        setReportReason("");
+      }
+    } catch (error: any) {
+      console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Something went wrong"
+      );
     }
   };
 
@@ -143,6 +307,10 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
+  if (notInterested) {
+    return null;
+  }
+
 
   return (
     <div className="space-y-4">
@@ -158,10 +326,16 @@ const VideoInfo = ({ video }: any) => {
 
           <div>
             <h3 className="font-medium">{video.videochanel}</h3>
+            <p className="text-sm text-muted-foreground">
+              {subscriberCount.toLocaleString()} subscribers
+            </p>
           </div>
 
-          <Button className="ml-4">
-            Subscribe
+          <Button
+            className="ml-4"
+            onClick={handleSubscribe}
+          >
+            {isSubscribed ? "Subscribed" : "Subscribe"}
           </Button>
         </div>
 
@@ -208,6 +382,7 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="rounded-full bg-muted"
+            onClick={handleShare}
           >
             <Share className="mr-2 h-5 w-5" />
             Share
@@ -223,13 +398,53 @@ const VideoInfo = ({ video }: any) => {
             Download
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-muted"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
+          <div className="relative" ref={moreMenuRef}>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full bg-muted"
+              onClick={() => setShowMoreMenu((prev) => !prev)}
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+
+            {showMoreMenu && (
+              <div className="absolute right-0 top-11 z-50 w-48 rounded-lg border border-border bg-background shadow-lg">
+
+                <button
+                  className="w-full px-4 py-3 text-left text-sm hover:bg-muted"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    window.location.href = "/subscriptions";
+                  }}
+                >
+                  📺 Watch ad-free
+                </button>
+
+                <button
+                  className="w-full px-4 py-3 text-left text-sm hover:bg-muted"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    setReportOpen(true);
+                  }}
+                >
+                  🚩 Report
+                </button>
+
+                <button
+                  className="w-full px-4 py-3 text-left text-sm hover:bg-muted"
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    setNotInterested(true);
+                  }}
+                >
+                  👎 Not interested
+                </button>
+
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -264,6 +479,60 @@ const VideoInfo = ({ video }: any) => {
             : "Show more"}
         </Button>
       </div>
+
+      {reportOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+            <h2 className="mb-4 text-lg font-semibold">
+              Report Video
+            </h2>
+
+            <div className="space-y-3">
+              {[
+                "Spam",
+                "Harassment",
+                "Hate Speech",
+                "Violence",
+                "False Information",
+                "Other",
+              ].map((reason) => (
+                <label
+                  key={reason}
+                  className="flex cursor-pointer items-center gap-3"
+                >
+                  <input
+                    type="radio"
+                    name="reportReason"
+                    value={reason}
+                    checked={reportReason === reason}
+                    onChange={(e) =>
+                      setReportReason(e.target.value)
+                    }
+                  />
+
+                  <span className="text-sm">{reason}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReportOpen(false);
+                  setReportReason("");
+                }}
+              >
+                Cancel
+              </Button>
+
+              <Button onClick={handleReport}>
+                Report
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -46,10 +46,31 @@ const videoSchema = mongoose.Schema(
       type: String,
     },
 
-    
+
     isPremium: {
       type: Boolean,
       default: false,
+    },
+
+    reported: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "user",
+        },
+        reason: {
+          type: String,
+        },
+        reportedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    status: {
+      type: String,
+      default: "active",
     },
   },
   {

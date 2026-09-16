@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Download, Play} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, MoreVertical, X } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 import { getVideoSrc } from "@/lib/videoSrc";
@@ -18,23 +19,27 @@ import VideoThumbnail from "@/components/VideoThumbnail";
 
 export default function DownloadsContent() {
   const { user } = useUser();
-  const [downloads, setdownloads] = useState<any[]>([]);
+
+  const [downloads, setDownloads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      loaddownloads();
+      loadDownloads();
     } else {
       setLoading(false);
     }
   }, [user]);
 
-  const loaddownloads = async () => {
+  const loadDownloads = async () => {
     if (!user) return;
 
     try {
-      const res = await axiosInstance.get(`/download/${user._id}`);
-      setdownloads(res.data);
+      const res = await axiosInstance.get(
+        `/download/${user._id}`
+      );
+
+      setDownloads(res.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -42,18 +47,32 @@ export default function DownloadsContent() {
     }
   };
 
-//   const handleRemoveFromdownloads = async (item: any) => {
-//     if (!user) return;
-//     const videoId = item?.videoid?._id;
-//     if (!videoId) return;
+  const handleRemoveFromDownloads = async (item: any) => {
+    if (!user) return;
 
-//     try {
-//       await axiosInstance.post(`/watch/${videoId}`, { userId: user._id });
-//       setdownloads((prev) => prev.filter((entry) => entry._id !== item._id));
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   };
+    const videoId = item?.videoid?._id;
+
+    if (!videoId) return;
+
+    try {
+      await axiosInstance.delete(
+        `/download/${videoId}`,
+        {
+          data: {
+            userId: user._id,
+          },
+        }
+      );
+
+      setDownloads((prev) =>
+        prev.filter(
+          (entry) => entry._id !== item._id
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   if (loading) {
     return <div>Loading downloads...</div>;
@@ -80,7 +99,9 @@ export default function DownloadsContent() {
       <div className="py-12 text-center">
         <Download className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
 
-        <h2 className="mb-2 text-xl font-semibold">No downloaded videos </h2>
+        <h2 className="mb-2 text-xl font-semibold">
+          No downloaded videos
+        </h2>
 
         <p className="text-muted-foreground">
           Downloaded videos will appear here.
@@ -91,56 +112,78 @@ export default function DownloadsContent() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{downloads.length} videos</p>
 
-        <Button className="flex items-center gap-2">
-          <Play className="h-4 w-4" />
-          Play all
-        </Button>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {downloads.length} videos
+        </p>
       </div>
 
       <div className="space-y-4">
+
         {downloads.map((item) => {
           const video = item.videoid || {};
           const videoSrc = getVideoSrc(video.filepath);
 
           return (
-            <div key={item._id} className="group flex gap-4">
-              <Link href={`/watch/${video._id}`} className="flex-shrink-0">
+            <div
+              key={item._id}
+              className="group flex gap-4"
+            >
+
+              {/* Thumbnail */}
+              <Link
+                href={`/watch/${video._id}`}
+                className="flex-shrink-0"
+              >
                 <div className="relative aspect-video w-40 overflow-hidden rounded bg-muted">
+
                   <VideoThumbnail
                     src={videoSrc}
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
+
                 </div>
               </Link>
 
+              {/* Video information */}
               <div className="min-w-0 flex-1">
-                <Link href={`/watch/${video._id}`}>
+
+                <Link
+                  href={`/watch/${video._id}`}
+                >
                   <h3 className="mb-1 line-clamp-2 text-sm font-medium group-hover:text-blue-600">
                     {video.videotitle}
                   </h3>
                 </Link>
 
-                <p className="text-sm text-muted-foreground">{video.videochanel}</p>
+                <p className="text-sm text-muted-foreground">
+                  {video.videochanel}
+                </p>
 
                 <p className="text-sm text-muted-foreground">
-                  {video.views?.toLocaleString() ?? 0} views • {" "}
+                  {video.views?.toLocaleString() ?? 0} views •{" "}
                   {video.createdAt
-                    ? `${formatDistanceToNow(new Date(video.createdAt))} ago`
+                    ? `${formatDistanceToNow(
+                        new Date(video.createdAt)
+                      )} ago`
                     : "Just now"}
                 </p>
 
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Added {item.createdAt
-                    ? `${formatDistanceToNow(new Date(item.createdAt))} ago`
+                  Added{" "}
+                  {item.createdAt
+                    ? `${formatDistanceToNow(
+                        new Date(item.createdAt)
+                      )} ago`
                     : "recently"}
                 </p>
+
               </div>
 
-              {/* <DropdownMenu>
-                
+              {/* 3 DOT MENU */}
+              <DropdownMenu>
+
                 <DropdownMenuTrigger
                   className="opacity-0 transition-opacity group-hover:opacity-100 inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted"
                 >
@@ -148,17 +191,25 @@ export default function DownloadsContent() {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
+
                   <DropdownMenuItem
-                    onClick={() => handleRemoveFromdownloads(item)}
+                    onClick={() =>
+                      handleRemoveFromDownloads(item)
+                    }
                   >
                     <X className="mr-2 h-4 w-4" />
+
                     Remove from Downloads
                   </DropdownMenuItem>
+
                 </DropdownMenuContent>
-              </DropdownMenu> */}
+
+              </DropdownMenu>
+
             </div>
           );
         })}
+
       </div>
     </div>
   );

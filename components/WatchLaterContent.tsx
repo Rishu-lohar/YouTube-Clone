@@ -93,11 +93,6 @@ export default function WatchLaterContent() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{watchLater.length} videos</p>
-
-        <Button className="flex items-center gap-2">
-          <Play className="h-4 w-4" />
-          Play all
-        </Button>
       </div>
 
       <div className="space-y-4">

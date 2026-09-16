@@ -6,7 +6,6 @@ import subscription from "../models/subscription.js";
 
 export const downloadVideo = async (req, res) => {
     try {
-
         const { videoId } = req.params;
         const { userId } = req.body;
 
@@ -78,9 +77,8 @@ export const downloadVideo = async (req, res) => {
             });
         }
 
-        // Daily Download Limit (Free Users)
+        // Daily Download Limit
         if (currentPlan === "Free") {
-
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -120,11 +118,10 @@ export const downloadVideo = async (req, res) => {
     }
 };
 
-// Get All Downloads
 
+// Get All Downloads
 export const getAllDownloads = async (req, res) => {
     try {
-
         const { userId } = req.params;
 
         const downloads = await download.find({
@@ -142,6 +139,54 @@ export const getAllDownloads = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong",
+        });
+    }
+};
+
+
+// Remove Download
+export const removeDownload = async (req, res) => {
+    try {
+        const { videoId } = req.params;
+        const { userId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(videoId)) {
+            return res.status(404).json({
+                success: false,
+                message: "Video not found",
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        const removedDownload = await download.findOneAndDelete({
+            userid: userId,
+            videoid: videoId,
+        });
+
+        if (!removedDownload) {
+            return res.status(404).json({
+                success: false,
+                message: "Download not found",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Removed from Downloads",
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to remove download",
         });
     }
 };

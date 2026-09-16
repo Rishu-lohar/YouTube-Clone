@@ -27,7 +27,12 @@ type NotificationType = {
   createdAt: string;
 };
 
-const Header = () => {
+const Header = ({
+  onMenuClick,
+}: {
+  onMenuClick: () => void;
+}) => {
+
   const { user, logout, handlegooglesignin } = useUser();
 
   const [currentPlan, setCurrentPlan] = useState<
@@ -240,7 +245,12 @@ const Header = () => {
 
         {/* Left */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuClick}
+          >
             <Menu className="w-6 h-6" />
           </Button>
 
@@ -316,7 +326,7 @@ const Header = () => {
                   </span>
 
                   <span className="text-[10px] text-green-600">
-                     Ad-Free
+                    Ad-Free
                   </span>
                 </div>
               ) : (
@@ -410,11 +420,10 @@ const Header = () => {
                                 );
                               }
                             }}
-                            className={`px-4 py-4 border-b border-border cursor-pointer hover:bg-muted transition ${
-                              !notification.isRead
-                                ? "bg-muted/60"
-                                : ""
-                            }`}
+                            className={`px-4 py-4 border-b border-border cursor-pointer hover:bg-muted transition ${!notification.isRead
+                              ? "bg-muted/60"
+                              : ""
+                              }`}
                           >
                             <div className="flex gap-3">
                               <div className="mt-1">

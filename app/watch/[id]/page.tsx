@@ -107,7 +107,7 @@ const WatchPage = () => {
 
   const handleWatchParty = async () => {
     try {
-      const res = await axiosInstance.post("/watch-party/create", {
+      const res = await axiosInstance.post("/watchparty/create", {
         hostId: user?._id,
         videoId: selectedVideo?._id,
       });
@@ -124,7 +124,7 @@ const WatchPage = () => {
 
   const handleJoinParty = async () => {
     try {
-      await axiosInstance.post("/watch-party/join", {
+      await axiosInstance.post("/watchparty/join", {
         roomCode: joinCode,
         userId: user?._id,
       });
@@ -190,12 +190,12 @@ const WatchPage = () => {
             
             <button
               onClick={handleWatchParty}
-              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
             >
               🎬 Start Watch Party
             </button>
 
-            <div className="space-y-3 mt-6">
+            <div className="space-y-3">
               <input
                 type="text"
                 placeholder="Enter Room Code"

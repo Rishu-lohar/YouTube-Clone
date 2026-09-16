@@ -58,7 +58,11 @@ export const joinParty = async (req, res) => {
       });
     }
 
-    if (!party.participants.includes(userId)) {
+    if (
+      !party.participants.some(
+        (id) => id.toString() === userId
+      )
+    ) {
       party.participants.push(userId);
       await party.save();
     }
@@ -140,7 +144,7 @@ export const leaveParty = async (req, res) => {
       await party.save();
     }
 
-    
+
     return res.status(200).json({
       success: true,
       message: "Left Party Successfully",

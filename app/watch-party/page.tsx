@@ -100,7 +100,7 @@ function WatchPartyContent() {
     }
 
     try {
-      const res = await axiosInstance.get(`/watch-party/${room}`);
+      const res = await axiosInstance.get(`/watchparty/${room}`);
       setParty(res.data.party);
     } catch (err) {
       console.log(err);
@@ -261,7 +261,7 @@ function WatchPartyContent() {
         userId: user?._id,
       });
 
-      await axiosInstance.post("/watch-party/leave", {
+      await axiosInstance.post("/watchparty/leave", {
         roomCode: room,
         userId: user?._id,
       });

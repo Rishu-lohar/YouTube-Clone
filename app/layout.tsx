@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+import LayoutShell from "@/components/LayoutShell";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/lib/AuthContext";
 import ThemeProvider from "@/providers/ThemeProvider";
@@ -42,25 +41,15 @@ export default function RootLayout({
           {/* Theme Provider */}
           <ThemeProvider>
 
-            {/* Header */}
-            <Header />
+            <OTPDialog />
 
-            {/* OTP Dialog */}
-            <OTPDialog /> 
-
-            {/* Sidebar + Current Page */}
-            <div className="flex min-h-[calc(100vh-64px)]">
-              <Sidebar />
-
-              {/* Current Page */}
-              <main className="flex-1 min-w-0">
-                {children}
-              </main>
-            </div>
+            <LayoutShell>
+              {children}
+            </LayoutShell>
 
             {/* Toast */}
             <Toaster />
-            
+
           </ThemeProvider>
         </UserProvider>
 

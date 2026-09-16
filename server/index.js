@@ -17,6 +17,7 @@ import subscriptionrouters from "./routes/subscription.js";
 import downloadRoutes from "./routes/download.js";
 import watchPartyRoutes from "./routes/watchParty.js";
 import notificationRoutes from "./routes/notification.js";
+import channelSubscriptionRoutes from "./routes/channelSubscription.js";
 
 import "./cron/subscriptionCron.js";
 
@@ -59,6 +60,7 @@ app.use("/download", downloadRoutes);
 app.use("/subscription", subscriptionrouters);
 app.use("/watchparty", watchPartyRoutes);
 app.use("/notification", notificationRoutes);
+app.use("/channel-subscription", channelSubscriptionRoutes);
 
 // SOCKET.IO 
 

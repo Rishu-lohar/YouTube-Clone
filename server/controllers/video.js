@@ -1,7 +1,7 @@
 ﻿import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import video from "../Models/video.js";
+import video from "../models/video.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

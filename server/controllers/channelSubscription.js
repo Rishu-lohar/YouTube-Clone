@@ -1,5 +1,5 @@
 import ChannelSubscription from "../models/channelSubscription.js";
-import User from "../Models/Auth.js";
+import User from "../models/Auth.js";
 
 // Subscribe
 export const subscribe = async (req, res) => {

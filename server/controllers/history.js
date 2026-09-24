@@ -1,5 +1,5 @@
-import video from "../Models/video.js";
-import history from "../Models/history.js";
+import video from "../models/video.js";
+import history from "../models/history.js";
 
 export const handlehistory = async (req, res) => {
   try {

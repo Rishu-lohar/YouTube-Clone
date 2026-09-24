@@ -1,5 +1,5 @@
-import video from "../Models/video.js";
-import like from "../Models/like.js";
+import video from "../models/video.js";
+import like from "../models/like.js";
 
 export const handlelike = async (req, res) => {
   try {

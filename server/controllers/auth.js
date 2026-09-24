@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
 
-import User from "../Models/Auth.js";
-import OTPVerification from "../Models/OTPVerification.js";
+import User from "../models/Auth.js";
+import OTPVerification from "../models/OTPVerification.js";
 import sendEmail from "../utils/sendEmail.js";
 import axios from "axios";
 

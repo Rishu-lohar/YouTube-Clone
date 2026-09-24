@@ -1,4 +1,4 @@
-import watchlater from "../Models/watchlater.js";
+import watchlater from "../models/watchlater.js";
 
 export const handlewatchlater = async (req, res) => {
   try {

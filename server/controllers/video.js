@@ -241,10 +241,9 @@ export const uploadvideo = async (req, res) => {
 export const getallvideo = async (req, res) => {
   try {
     await syncPublicVideos();
+
     const videos = await video
-      .find({
-        filepath: { $regex: "^/videos/" },
-      })
+      .find({})
       .sort({ createdAt: -1 });
 
     return res.status(200).json(videos);

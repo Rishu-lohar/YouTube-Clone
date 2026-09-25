@@ -3,6 +3,7 @@ import {
   uploadvideo,
   getallvideo,
   reportVideo,
+  deleteVideo,
 } from "../controllers/video.js";
 
 import upload from "../filehelper/filehelper.js";
@@ -16,6 +17,7 @@ router.post(
 );
 
 router.get("/getall", getallvideo);
+router.delete("/:id", deleteVideo);
 router.put("/report/:id", reportVideo);
 
 export default router;

@@ -8,6 +8,7 @@ import ChannelHeader from "@/components/ChannelHeader";
 import ChannelTabs from "@/components/ChannelTabs";
 import ChannelVideos from "@/components/ChannelVideos";
 import VideoUploader from "@/components/VideoUploader";
+import ChannelDialogue from "@/components/ChannelDialogue";
 
 const slugify = (value: string) =>
   value
@@ -32,6 +33,7 @@ const ChannelPage = () => {
   const { user } = useUser();
   const [videos, setVideos] = useState<ChannelVideo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   useEffect(() => {
     const loadVideos = async () => {
@@ -94,8 +96,20 @@ const ChannelPage = () => {
           id: channelId || "",
           channelname: channelName,
           description: channelDescription,
+          image: isOwner ? user?.image : undefined,
         }}
+        isOwner={isOwner}
+        onEditProfile={() => setIsEditProfileOpen(true)}
       />
+
+      {isOwner && (
+        <ChannelDialogue
+          isopen={isEditProfileOpen}
+          onclose={() => setIsEditProfileOpen(false)}
+          channeldata={{ name: channelName, description: user?.description || "" }}
+          mode="edit"
+        />
+      )}
 
       <ChannelTabs />
 
@@ -109,7 +123,14 @@ const ChannelPage = () => {
       </div>
 
       <div className="px-4 pb-8">
-        <ChannelVideos videos={videos} />
+        <ChannelVideos
+          videos={videos}
+          onVideoDeleted={(videoId) =>
+            setVideos((current) =>
+              current.filter((video) => video._id !== videoId)
+            )
+          }
+        />
       </div>
     </div>
   );

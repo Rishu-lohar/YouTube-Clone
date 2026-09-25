@@ -27,13 +27,19 @@ export default function WatchPartyChat({
   ]);
 
   useEffect(() => {
-    socket.on("receive-message", (data: Message) => {
+    const handleReceiveMessage = (data: Message) => {
       setMessages((prev) => [...prev, data]);
-    });
-
-    return () => {
-      socket.off("receive-message");
     };
+
+    const cleanup = () => {
+      socket.off("receive-message", handleReceiveMessage);
+      window.removeEventListener("pagehide", cleanup);
+    };
+
+    socket.on("receive-message", handleReceiveMessage);
+    window.addEventListener("pagehide", cleanup);
+
+    return cleanup;
   }, []);
 
   const handleSend = () => {
@@ -78,7 +84,7 @@ export default function WatchPartyChat({
           placeholder="Type a message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 border rounded-lg px-4 py-2"
+          className="min-w-0 flex-1 border rounded-lg px-4 py-2"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSend();

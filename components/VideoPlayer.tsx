@@ -34,6 +34,7 @@ export default function VideoPlayer({
   const src = getVideoSrc(videoPath);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
   const clickTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastTap = useRef(0);
 
@@ -44,8 +45,7 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-
+  const [videoError, setVideoError] = useState(false);
 
   const handlePlayPause = async () => {
     if (!videoRef.current) return;
@@ -171,9 +171,16 @@ export default function VideoPlayer({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!playerRef.current?.contains(document.activeElement)) {
+        return;
+      }
+
+      const target = e.target;
       if (
-        document.activeElement instanceof HTMLInputElement ||
-        document.activeElement instanceof HTMLTextAreaElement
+        target instanceof HTMLElement &&
+        target.closest(
+          'button, a, input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]'
+        )
       ) {
         return;
       }
@@ -191,6 +198,24 @@ export default function VideoPlayer({
         case "ArrowRight":
           handleForward();
           break;
+
+        case "ArrowUp":
+        case "ArrowDown": {
+          const player = videoRef.current;
+          if (!player) return;
+
+          e.preventDefault();
+          const delta = e.key === "ArrowUp" ? 0.1 : -0.1;
+          const nextVolume = Math.min(
+            1,
+            Math.max(0, Math.round((player.volume + delta) * 10) / 10)
+          );
+          player.volume = nextVolume;
+          player.muted = nextVolume === 0;
+          setVolume(nextVolume);
+          setIsMuted(player.muted);
+          break;
+        }
 
         case "m":
         case "M":
@@ -221,6 +246,8 @@ export default function VideoPlayer({
   const handleVideoClick = (
     e: React.MouseEvent<HTMLDivElement>
   ) => {
+    e.currentTarget.focus();
+
     if (clickTimeout.current) {
       clearTimeout(clickTimeout.current);
       clickTimeout.current = null;
@@ -248,6 +275,9 @@ export default function VideoPlayer({
   };
   return (
     <div
+      ref={playerRef}
+      tabIndex={0}
+      aria-label="Video player. Use Space to play or pause, arrow keys to seek and adjust volume."
       className="relative aspect-video bg-black rounded-lg overflow-hidden"
       onClick={handleVideoClick}
       onTouchEnd={handleDoubleTap}
@@ -265,8 +295,15 @@ export default function VideoPlayer({
           }
         }}
 
-        onLoadStart={() => setIsLoading(true)}
+        onLoadStart={() => {
+          setIsLoading(true);
+          setVideoError(false);
+        }}
         onWaiting={() => setIsLoading(true)}
+        onError={() => {
+          setIsLoading(false);
+          setVideoError(true);
+        }}
         onPlaying={() => setIsLoading(false)}
         onCanPlay={() => setIsLoading(false)}
         onPlay={() => setIsPlaying(true)}
@@ -297,6 +334,15 @@ export default function VideoPlayer({
         </div>
       )}
 
+      {videoError && (
+        <div
+          role="alert"
+          className="absolute inset-0 flex items-center justify-center bg-black/70 p-4 text-center text-white"
+        >
+          Video unavailable. Please try again later.
+        </div>
+      )}
+
       {/* Progress Bar */}
       <div className="absolute bottom-16 left-4 right-4">
         <input
@@ -324,7 +370,7 @@ export default function VideoPlayer({
       )}
 
       {/* Controls */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3">
+      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-1 sm:gap-2 lg:gap-3">
 
         {/* Backward */}
         <button
@@ -332,7 +378,7 @@ export default function VideoPlayer({
             stopPropagation(event);
             handleBackward();
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           <RotateCcw size={20} />
         </button>
@@ -343,7 +389,7 @@ export default function VideoPlayer({
             stopPropagation(event);
             handlePlayPause();
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           {isPlaying ? (
             <Pause size={22} />
@@ -358,13 +404,13 @@ export default function VideoPlayer({
             stopPropagation(event);
             handleForward();
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           <RotateCw size={20} />
         </button>
 
         {/* Time */}
-        <p className="text-white text-sm font-medium">
+        <p className="whitespace-nowrap text-xs font-medium text-white lg:text-sm">
           {formatTime(currentTime)} / {formatTime(duration)}
         </p>
 
@@ -377,7 +423,7 @@ export default function VideoPlayer({
             stopPropagation(event);
             handleMute();
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           {isMuted ? (
             <VolumeX size={20} />
@@ -399,7 +445,7 @@ export default function VideoPlayer({
             stopPropagation(event);
             handleVolume(event);
           }}
-          className="w-24 cursor-pointer"
+          className="hidden w-16 cursor-pointer sm:block lg:w-24"
         />
 
         {/* Fullscreen */}
@@ -408,7 +454,7 @@ export default function VideoPlayer({
             stopPropagation(event);
             handleFullscreen();
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           <Maximize size={20} />
         </button>
@@ -421,7 +467,7 @@ export default function VideoPlayer({
               onNext();
             }
           }}
-          className="bg-black/70 hover:bg-black/90 transition text-white p-3 rounded-full"
+          className="rounded-full bg-black/70 p-2 text-white transition hover:bg-black/90 lg:p-3"
         >
           <SkipForward size={20} />
         </button>

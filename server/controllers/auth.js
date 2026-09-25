@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
+import fs from "fs/promises";
 
 import User from "../models/Auth.js";
 import OTPVerification from "../models/OTPVerification.js";
@@ -186,6 +187,47 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({
       message: "Something went wrong",
     });
+  }
+};
+
+export const updateProfileImage = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid User ID" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({
+      message: "Please upload a JPEG, PNG, WebP, or GIF image under 5 MB",
+    });
+  }
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $set: { image: `uploads/${req.file.filename}` } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      await fs.unlink(req.file.path).catch((error) => {
+        if (error.code !== "ENOENT") {
+          console.error("Unable to remove unused profile image:", error);
+        }
+      });
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Unable to update profile image:", error);
+    await fs.unlink(req.file.path).catch((cleanupError) => {
+      if (cleanupError.code !== "ENOENT") {
+        console.error("Unable to remove failed profile image:", cleanupError);
+      }
+    });
+    return res.status(500).json({ message: "Unable to update profile image" });
   }
 };
 

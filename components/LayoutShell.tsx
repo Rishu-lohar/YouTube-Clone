@@ -1,23 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+
+const DESKTOP_MEDIA_QUERY = "(min-width: 768px)";
+
+const subscribeToDesktopMedia = (callback: () => void) => {
+  const media = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+};
+
+const getDesktopSnapshot = () =>
+  window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+
+const getDesktopServerSnapshot = () => false;
 
 const LayoutShell = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const isDesktop = useSyncExternalStore(
+    subscribeToDesktopMedia,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot
+  );
+  const [sidebarOverride, setSidebarOverride] = useState<boolean | null>(null);
+  const isSidebarOpen = sidebarOverride ?? isDesktop;
 
   return (
     <>
       <Header
-        onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
+        onMenuClick={() =>
+          setSidebarOverride((prev) => !(prev ?? isDesktop))
+        }
       />
 
-      <div className="flex min-h-[calc(100vh-64px)]">
+      <div className="relative flex min-h-[calc(100vh-64px)]">
         <Sidebar isOpen={isSidebarOpen} />
 
         <main className="flex-1 min-w-0">

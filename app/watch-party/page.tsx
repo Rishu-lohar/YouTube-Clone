@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
@@ -26,6 +26,10 @@ type PartyData = {
   };
 };
 
+const peerConfiguration: RTCConfiguration = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
+
 function WatchPartyContent() {
   const { user } = useUser();
   const router = useRouter();
@@ -44,21 +48,33 @@ function WatchPartyContent() {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localStream = useRef<MediaStream | null>(null);
   const screenStream = useRef<MediaStream | null>(null);
+  const cleanupPartyRef = useRef<() => void>(() => {});
+  const partyGeneration = useRef(0);
 
-  const configuration = {
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-    ],
+  const stopMedia = () => {
+    localStream.current?.getTracks().forEach((track) => track.stop());
+    screenStream.current?.getTracks().forEach((track) => track.stop());
+    peerConnection.current?.close();
+
+    localStream.current = null;
+    screenStream.current = null;
+    peerConnection.current = null;
+
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
   };
 
-  const startLocalStream = async () => {
+  const startLocalStream = async (isActive: () => boolean) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
+
+      if (!isActive()) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
 
       localStream.current = stream;
 
@@ -70,20 +86,22 @@ function WatchPartyContent() {
     }
   };
 
-  const createPeerConnection = () => {
-    peerConnection.current = new RTCPeerConnection(configuration);
+  const createPeerConnection = useCallback(() => {
+    const connection = new RTCPeerConnection(peerConfiguration);
+    peerConnection.current = connection;
+    const stream = localStream.current;
 
-    localStream.current?.getTracks().forEach((track) => {
-      peerConnection.current?.addTrack(track, localStream.current!);
+    stream?.getTracks().forEach((track) => {
+      connection.addTrack(track, stream);
     });
 
-    peerConnection.current.ontrack = (event) => {
+    connection.ontrack = (event) => {
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = event.streams[0];
       }
     };
 
-    peerConnection.current.onicecandidate = (event) => {
+    connection.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit("ice-candidate", {
           roomCode: room,
@@ -91,9 +109,9 @@ function WatchPartyContent() {
         });
       }
     };
-  };
+  }, [room]);
 
-  const fetchParty = async () => {
+  const fetchParty = useCallback(async () => {
     if (!room) {
       setLoading(false);
       return;
@@ -107,7 +125,7 @@ function WatchPartyContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [room]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -117,119 +135,154 @@ function WatchPartyContent() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [room]);
+  }, [fetchParty]);
 
   useEffect(() => {
     if (!room || !user) return;
 
-    const init = async () => {
-      socket.connect();
-      await startLocalStream();
-      createPeerConnection();
+    const generation = ++partyGeneration.current;
+    let active = true;
+    let syncTimeout: number | null = null;
 
-      socket.emit("join-room", {
-        roomCode: room,
-        userId: user._id,
-      });
+    const cleanup = () => {
+      active = false;
+      if (syncTimeout !== null) window.clearTimeout(syncTimeout);
+      window.removeEventListener("pagehide", cleanup);
+      socket.off("offer", handleOffer);
+      socket.off("answer", handleAnswer);
+      socket.off("ice-candidate", handleIceCandidate);
+      socket.off("video-sync", handleVideoSync);
+      socket.off("participant-joined", handleParticipantChange);
+      socket.off("participant-left", handleParticipantChange);
+      stopMedia();
+      socket.disconnect();
 
-      if (party?.host?._id === user._id && peerConnection.current) {
-        const offer = await peerConnection.current.createOffer();
-        await peerConnection.current.setLocalDescription(offer);
-
-        socket.emit("offer", {
-          roomCode: room,
-          offer,
-        });
+      if (partyGeneration.current === generation) {
+        partyGeneration.current += 1;
+      }
+      if (cleanupPartyRef.current === cleanup) {
+        cleanupPartyRef.current = () => {};
       }
     };
 
-    init();
-
-    socket.on("offer", async (offer) => {
-      if (!peerConnection.current) return;
-
-      await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(offer)
-      );
-
-      const answer = await peerConnection.current.createAnswer();
-      await peerConnection.current.setLocalDescription(answer);
-
-      socket.emit("answer", {
-        roomCode: room,
-        answer,
-      });
-    });
-
-    socket.on("answer", async (answer) => {
-      if (!peerConnection.current) return;
-      await peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    });
-
-    socket.on("ice-candidate", async (candidate) => {
-      if (!peerConnection.current) return;
+    const handleOffer = async (offer: RTCSessionDescriptionInit) => {
+      const connection = peerConnection.current;
+      if (!active || !connection) return;
 
       try {
-        await peerConnection.current.addIceCandidate(
-          new RTCIceCandidate(candidate)
+        await connection.setRemoteDescription(
+          new RTCSessionDescription(offer)
+        );
+        if (!active || peerConnection.current !== connection) return;
+
+        const answer = await connection.createAnswer();
+        await connection.setLocalDescription(answer);
+        if (!active) return;
+
+        socket.emit("answer", {
+          roomCode: room,
+          answer,
+        });
+      } catch (err) {
+        console.error("Watch Party offer handling failed:", err);
+      }
+    };
+
+    const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+      const connection = peerConnection.current;
+      if (!active || !connection) return;
+
+      try {
+        await connection.setRemoteDescription(
+          new RTCSessionDescription(answer)
         );
       } catch (err) {
-        console.log(err);
+        console.error("Watch Party answer handling failed:", err);
       }
-    });
+    };
 
-    socket.on("video-sync", (data) => {
-      window.setTimeout(() => {
-        setIsRemoteUpdate(true);
-      }, 0);
+    const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
+      const connection = peerConnection.current;
+      if (!active || !connection) return;
 
+      try {
+        await connection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error("Watch Party ICE candidate handling failed:", err);
+      }
+    };
+
+    const handleVideoSync = (data: {
+      action: string;
+      time?: number;
+    }) => {
       const video = document.querySelector(
         "[data-watch-party-video]"
       ) as HTMLVideoElement | null;
 
-      if (!video) {
-        window.setTimeout(() => {
-          setIsRemoteUpdate(false);
-        }, 0);
-        return;
-      }
+      if (!video) return;
+
+      setIsRemoteUpdate(true);
 
       if (data.action === "play") {
-        video.play().catch((err) => console.log(err));
-      }
-
-      if (data.action === "pause") {
+        video.play().catch((err) => console.error(err));
+      } else if (data.action === "pause") {
         video.pause();
-      }
-
-      if (data.action === "seek") {
+      } else if (data.action === "seek" && data.time !== undefined) {
         video.currentTime = data.time;
       }
 
-      window.setTimeout(() => {
-        setIsRemoteUpdate(false);
+      if (syncTimeout !== null) window.clearTimeout(syncTimeout);
+      syncTimeout = window.setTimeout(() => {
+        if (active) setIsRemoteUpdate(false);
       }, 100);
-    });
-
-    socket.on("participant-joined", fetchParty);
-    socket.on("participant-left", fetchParty);
-
-    return () => {
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
-      socket.off("video-sync");
-      socket.off("participant-joined");
-      socket.off("participant-left");
-
-      localStream.current?.getTracks().forEach((track) => track.stop());
-      screenStream.current?.getTracks().forEach((track) => track.stop());
-      peerConnection.current?.close();
-      socket.disconnect();
     };
-  }, [room, user, party?.host?._id]);
+
+    const handleParticipantChange = () => {
+      if (active) void fetchParty();
+    };
+
+    const init = async () => {
+      try {
+        socket.connect();
+        await startLocalStream(() => active);
+        if (!active) return;
+
+        createPeerConnection();
+
+        socket.emit("join-room", {
+          roomCode: room,
+          userId: user._id,
+        });
+
+        if (party?.host?._id === user._id && peerConnection.current) {
+          const connection = peerConnection.current;
+          const offer = await connection.createOffer();
+          await connection.setLocalDescription(offer);
+          if (!active) return;
+
+          socket.emit("offer", {
+            roomCode: room,
+            offer,
+          });
+        }
+      } catch (err) {
+        if (active) console.error("Watch Party initialization failed:", err);
+      }
+    };
+
+    socket.on("offer", handleOffer);
+    socket.on("answer", handleAnswer);
+    socket.on("ice-candidate", handleIceCandidate);
+    socket.on("video-sync", handleVideoSync);
+    socket.on("participant-joined", handleParticipantChange);
+    socket.on("participant-left", handleParticipantChange);
+    cleanupPartyRef.current = cleanup;
+    window.addEventListener("pagehide", cleanup);
+    void init();
+
+    return cleanup;
+  }, [room, user, party?.host?._id, fetchParty, createPeerConnection]);
 
   if (loading) {
     return (
@@ -255,21 +308,17 @@ function WatchPartyContent() {
   }
 
   const handleLeaveParty = async () => {
-    try {
-      socket.emit("leave-room", {
-        roomCode: room,
-        userId: user?._id,
-      });
+    socket.emit("leave-room", {
+      roomCode: room,
+      userId: user?._id,
+    });
+    cleanupPartyRef.current();
 
+    try {
       await axiosInstance.post("/watchparty/leave", {
         roomCode: room,
         userId: user?._id,
       });
-
-      localStream.current?.getTracks().forEach((track) => track.stop());
-      screenStream.current?.getTracks().forEach((track) => track.stop());
-      peerConnection.current?.close();
-      socket.disconnect();
 
       router.push("/");
     } catch (err) {
@@ -278,10 +327,17 @@ function WatchPartyContent() {
   };
 
   const startScreenShare = async () => {
+    const generation = partyGeneration.current;
+
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
       });
+
+      if (generation !== partyGeneration.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
 
       screenStream.current = stream;
       const screenTrack = stream.getVideoTracks()[0];
@@ -333,7 +389,7 @@ function WatchPartyContent() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
+    <div className="mx-auto max-w-6xl p-4 md:p-8">
       <h1 className="text-4xl font-bold mb-6">🎬 Watch Party</h1>
 
       <div className="border rounded-xl p-6 space-y-4">
@@ -434,7 +490,7 @@ function WatchPartyContent() {
         />
       </div>
 
-      <div className="mt-8 flex justify-end gap-3">
+      <div className="mt-8 flex flex-col justify-end gap-3 sm:flex-row sm:flex-wrap">
         <button
           onClick={handleLeaveParty}
           className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg"
@@ -480,4 +536,3 @@ export default function WatchPartyPage() {
     </Suspense>
   );
 }
-

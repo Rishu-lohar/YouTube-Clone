@@ -8,14 +8,17 @@ type Video = {
   views?: number;
   uploader?: string;
   createdAt?: string;
+  isPremium?: boolean;
 };
 
 type ChannelVideosProps = {
   videos: Video[];
+  onVideoDeleted: (videoId: string) => void;
 };
 
 export default function ChannelVideos({
   videos,
+  onVideoDeleted,
 }: ChannelVideosProps) {
   if (videos.length === 0) {
     return (
@@ -38,6 +41,7 @@ export default function ChannelVideos({
           <VideoCard
             key={video._id}
             video={video}
+            onDeleted={onVideoDeleted}
           />
         ))}
       </div>

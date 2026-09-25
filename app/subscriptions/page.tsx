@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
+import { getVideoSrc } from "@/lib/videoSrc";
 
 export default function SubscriptionsPage() {
   const { user } = useUser();
@@ -87,7 +88,7 @@ export default function SubscriptionsPage() {
                     <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex items-center justify-center">
                       {channel?.image ? (
                         <img
-                          src={channel.image}
+                          src={getVideoSrc(channel.image)}
                           alt={
                             channel.channelname ||
                             channel.name ||

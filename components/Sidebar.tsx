@@ -27,9 +27,9 @@ const Sidebar = ({
   return (
     <aside
       className={`${isOpen
-          ? "w-64 p-2 border-r border-border"
-          : "w-0 p-0 border-r-0"
-        } bg-background text-foreground min-h-screen overflow-hidden transition-all duration-200`}
+          ? "absolute left-0 top-0 z-20 w-64 p-2 border-r border-border md:relative md:left-auto md:top-auto"
+          : "absolute left-0 top-0 z-20 w-0 p-0 border-r-0 md:relative md:left-auto md:top-auto"
+        } min-h-screen shrink-0 overflow-hidden bg-background text-foreground transition-all duration-200`}
     >
       <nav className="space-y-1">
 

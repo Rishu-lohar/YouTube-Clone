@@ -5,6 +5,7 @@ import { translate } from "@vitalets/google-translate-api";
 
 import {
   containsBadWords,
+  hasRepeatedSpecialCharacters,
   onlySpecialCharacters,
 } from "../utils/commentValidation.js";
 
@@ -34,6 +35,12 @@ export const postcomment = async (req, res) => {
     if (onlySpecialCharacters(commentbody)) {
       return res.status(400).json({
         message: "Invalid comment",
+      });
+    }
+
+    if (hasRepeatedSpecialCharacters(commentbody)) {
+      return res.status(400).json({
+        message: "Comment contains repeated special characters",
       });
     }
 
@@ -338,9 +345,13 @@ export const translateComment = async (req,res)=>{
   catch(error){
     console.error(error);
 
-    return res.status(500).json({
+    const isRateLimited = error?.name === "TooManyRequestsError";
+
+    return res.status(isRateLimited ? 429 : 502).json({
       success:false,
-      message:"Translation failed",
+      message: isRateLimited
+        ? "Translation service is temporarily rate limited"
+        : "Translation failed",
     });
   }
 };

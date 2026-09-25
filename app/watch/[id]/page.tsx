@@ -7,7 +7,7 @@ import VideoPlayer from "@/components/VideoPlayer";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 
 
@@ -35,7 +35,7 @@ const WatchPage = () => {
   const [currentPlan, setCurrentPlan] = useState("Free");
   const [joinCode, setJoinCode] = useState("");
 
-  const fetchVideo = async () => {
+  const fetchVideo = useCallback(async () => {
     if (!id) return;
 
     try {
@@ -51,9 +51,9 @@ const WatchPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!user) {
       setCurrentPlan("Free");
       return;
@@ -73,18 +73,27 @@ const WatchPage = () => {
       console.log(error);
       setCurrentPlan("Free");
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void fetchVideo();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [fetchVideo]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
       void fetchSubscription();
     }, 0);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [id, user]);
+  }, [fetchSubscription]);
 
   if (loading) {
     return <div>Loading...</div>;

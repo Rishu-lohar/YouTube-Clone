@@ -30,14 +30,20 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // frontend port
+    origin: [
+      "https://youtube-clone-two-dusky.vercel.app",
+      "http://localhost:3000",
+    ],
     methods: ["GET", "POST"],
   },
 });
 
 app.use(
   cors({
-    origin: "https://youtube-clone-two-dusky.vercel.app",
+    origin: [
+      process.env.FRONTEND_URL,
+      "http://localhost:3000",
+    ],
     credentials: true,
   })
 );

@@ -2,7 +2,7 @@
 
 import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -18,6 +18,7 @@ import Channeldialogue from "./ChannelDialogue";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
+import { getVideoSrc } from "@/lib/videoSrc";
 
 type NotificationType = {
   _id: string;
@@ -49,6 +50,7 @@ const Header = ({
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
+  const showNotificationsRef = useRef(false);
 
   const router = useRouter();
 
@@ -77,7 +79,7 @@ const Header = ({
   }, [user]);
 
   // Fetch notifications
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user?._id) return;
 
     try {
@@ -91,10 +93,10 @@ const Header = ({
     } catch (error) {
       console.log("Notification fetch error:", error);
     }
-  };
+  }, [user]);
 
   // Fetch unread count
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     if (!user?._id) return;
 
     try {
@@ -108,7 +110,7 @@ const Header = ({
     } catch (error) {
       console.log("Unread count error:", error);
     }
-  };
+  }, [user]);
 
   // Initial notification fetch + refresh
   useEffect(() => {
@@ -120,13 +122,13 @@ const Header = ({
     const interval = setInterval(() => {
       fetchUnreadCount();
 
-      if (showNotifications) {
+      if (showNotificationsRef.current) {
         fetchNotifications();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [user, showNotifications]);
+  }, [user, fetchNotifications, fetchUnreadCount]);
 
   useEffect(() => {
     if (!showNotifications) return;
@@ -142,6 +144,7 @@ const Header = ({
         notificationButtonRef.current?.contains(target);
 
       if (!clickedInsidePanel && !clickedBell) {
+        showNotificationsRef.current = false;
         setShowNotifications(false);
       }
     };
@@ -157,6 +160,7 @@ const Header = ({
   const handleNotificationClick = async () => {
     const newState = !showNotifications;
 
+    showNotificationsRef.current = newState;
     setShowNotifications(newState);
 
     if (newState) {
@@ -241,10 +245,10 @@ const Header = ({
 
   return (
     <>
-      <header className="flex items-center justify-between px-4 py-2 bg-background border-b border-border text-foreground">
+      <header className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 bg-background border-b border-border text-foreground">
 
         {/* Left */}
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
 
           <Button
             variant="ghost"
@@ -266,11 +270,11 @@ const Header = ({
               </svg>
             </div>
 
-            <span className="text-xl font-medium text-foreground">
+            <span className="text-lg font-medium text-foreground sm:text-xl">
               YourTube
             </span>
 
-            <span className="text-xs text-muted-foreground ml-1">
+            <span className="ml-1 hidden text-xs text-muted-foreground sm:inline">
               IN
             </span>
           </Link>
@@ -279,9 +283,9 @@ const Header = ({
         {/* Search */}
         <form
           onSubmit={handleSearch}
-          className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
+          className="mx-1 flex min-w-0 flex-1 items-center gap-2 sm:mx-4"
         >
-          <div className="flex flex-1">
+          <div className="flex min-w-0 flex-1">
             <Input
               type="search"
               placeholder="Search"
@@ -290,12 +294,12 @@ const Header = ({
                 setSearchQuery(e.target.value)
               }
               onKeyDown={handleKeypress}
-              className="rounded-l-full border-r-0 focus-visible:ring-0"
+              className="min-w-0 rounded-l-full border-r-0 focus-visible:ring-0"
             />
 
             <Button
               type="submit"
-              className="rounded-r-full px-6 border border-l-0 bg-muted hover:bg-accent text-foreground"
+              className="rounded-r-full border border-l-0 bg-muted px-3 text-foreground hover:bg-accent sm:px-6"
             >
               <Search className="w-5 h-5" />
             </Button>
@@ -305,7 +309,7 @@ const Header = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="rounded-full"
+            className="hidden rounded-full sm:inline-flex"
             onClick={handleVoiceSearch}
           >
             <Mic className="w-5 h-5" />
@@ -313,14 +317,14 @@ const Header = ({
         </form>
 
         {/* Right */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {user ? (
             <>
               <ThemeToggle />
 
               {/* Subscription */}
               {currentPlan !== "Free" ? (
-                <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-yellow-100 border border-yellow-300">
+                <div className="hidden flex-col items-center rounded-lg border border-yellow-300 bg-yellow-100 px-3 py-1 sm:flex">
                   <span className="text-xs font-semibold text-yellow-700">
                     {currentPlan} Member
                   </span>
@@ -330,7 +334,7 @@ const Header = ({
                   </span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center px-3 py-1 rounded-lg bg-muted border border-border">
+                <div className="hidden flex-col items-center rounded-lg border border-border bg-muted px-3 py-1 sm:flex">
                   <span className="text-xs font-semibold text-foreground">
                     Free User
                   </span>
@@ -381,7 +385,7 @@ const Header = ({
                 {showNotifications && (
                   <div
                     ref={notificationRef}
-                    className="absolute right-0 top-12 z-50 w-[380px] max-h-[500px] overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
+                    className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border bg-background shadow-2xl sm:w-[380px] sm:max-w-[calc(100vw-2rem)]"
                   >
 
                     {/* Header */}
@@ -458,7 +462,7 @@ const Header = ({
               <DropdownMenu>
                 <DropdownMenuTrigger className="rounded-full">
                   <Avatar>
-                    <AvatarImage src={user.image} />
+                    <AvatarImage src={getVideoSrc(user.image)} />
 
                     <AvatarFallback>
                       {user.name?.charAt(0) || "U"}
@@ -521,10 +525,11 @@ const Header = ({
           ) : (
             <Button
               onClick={handlegooglesignin}
-              className="flex items-center gap-2"
+              aria-label="Sign in with Google"
+              className="flex h-9 w-9 items-center justify-center gap-2 p-0 sm:w-auto sm:px-4"
             >
               <User className="w-4 h-4" />
-              Sign In
+              <span className="hidden sm:inline">Sign In</span>
             </Button>
           )}
         </div>

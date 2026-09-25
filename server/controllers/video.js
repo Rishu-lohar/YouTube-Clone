@@ -1,6 +1,7 @@
 ﻿import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 import video from "../models/video.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -253,6 +254,78 @@ export const getallvideo = async (req, res) => {
     return res.status(500).json({
       message: "Something went wrong",
     });
+  }
+};
+
+export const deleteVideo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid video ID" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const existingVideo = await video.findById(id);
+    if (!existingVideo) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    if (existingVideo.uploader !== userId) {
+      return res.status(403).json({ message: "You cannot delete this video" });
+    }
+
+    const normalizedFilepath = existingVideo.filepath.replace(/\\/g, "/");
+    let localFile;
+    if (normalizedFilepath.startsWith("uploads/")) {
+      const uploadsDirectory = path.resolve(__dirname, "../uploads");
+      localFile = path.resolve(
+        uploadsDirectory,
+        normalizedFilepath.slice("uploads/".length)
+      );
+      const relativeFile = path.relative(uploadsDirectory, localFile);
+
+      if (
+        !relativeFile ||
+        relativeFile.startsWith("..") ||
+        path.isAbsolute(relativeFile)
+      ) {
+        return res.status(400).json({ message: "Video file path is invalid" });
+      }
+    }
+
+    const deletedVideo = await video.findOneAndDelete({
+      _id: id,
+      uploader: userId,
+    });
+    if (!deletedVideo) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    if (localFile) {
+      try {
+        await fs.unlink(localFile);
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          console.error("Video record deleted, but file cleanup failed:", error);
+          return res.status(500).json({
+            message: "Video record deleted, but uploaded file cleanup failed",
+          });
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Video deleted successfully",
+    });
+  } catch (error) {
+    console.error("Unable to delete video:", error);
+    return res.status(500).json({ message: "Unable to delete video" });
   }
 };
 

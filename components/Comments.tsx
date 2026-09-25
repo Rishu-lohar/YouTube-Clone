@@ -1,5 +1,5 @@
 ﻿"use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
@@ -24,6 +24,8 @@ import {
 } from "./ui/select";
 
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { toast } from "sonner";
+import { getVideoSrc } from "@/lib/videoSrc";
 
 interface Comment {
   _id: string;
@@ -45,7 +47,7 @@ interface Comment {
   status: string;
 }
 
-const Comments = ({ videoId }: any) => {
+const Comments = ({ videoId }: { videoId: string }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,14 +62,12 @@ const Comments = ({ videoId }: any) => {
     [key: string]: string;
   }>({});
   const [targetLanguage, setTargetLanguage] = useState("hi");
+  const translatingCommentIds = useRef(new Set<string>());
+  const [translatingComments, setTranslatingComments] = useState<Set<string>>(
+    new Set()
+  );
 
-  useEffect(() => {
-    loadComments();
-  }, [videoId]);
-
-  // Handle loadComments()
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       const res = await axiosInstance.get(`/comment/${videoId}`);
       setComments(res.data);
@@ -76,7 +76,11 @@ const Comments = ({ videoId }: any) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
+
+  useEffect(() => {
+    void loadComments();
+  }, [loadComments]);
 
   if (loading) {
     return <div>Loading comments...</div>;
@@ -225,6 +229,11 @@ const Comments = ({ videoId }: any) => {
   // HandleTranslate()
 
   const handleTranslate = async (id: string) => {
+    if (translatingCommentIds.current.has(id)) return;
+
+    translatingCommentIds.current.add(id);
+    setTranslatingComments(new Set(translatingCommentIds.current));
+
     try {
       const res = await axiosInstance.put(`/comment/translate/${id}`, {
         targetLanguage,
@@ -239,6 +248,15 @@ const Comments = ({ videoId }: any) => {
     }
     catch (error) {
       console.error(error);
+      setTranslatedComments((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      toast.error("Translation is unavailable. The original comment is shown.");
+    } finally {
+      translatingCommentIds.current.delete(id);
+      setTranslatingComments(new Set(translatingCommentIds.current));
     }
   };
 
@@ -251,7 +269,7 @@ const Comments = ({ videoId }: any) => {
           <div className="flex gap-4">
             <Avatar className="w-10 h-10">
               {user.image ? (
-                <AvatarImage src={user.image} />
+                <AvatarImage src={getVideoSrc(user.image)} />
               ) : (
                 <AvatarFallback>{user.name?.[0] || "U"}</AvatarFallback>
               )}
@@ -260,7 +278,9 @@ const Comments = ({ videoId }: any) => {
               <Textarea
                 placeholder="Add a comment..."
                 value={newComment}
-                onChange={(e: any) => setNewComment(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setNewComment(e.target.value)
+                }
                 className="min-h-[80px] resize-none border-0 border-b-2 rounded-none focus-visible:ring-0"
               />
               <div className="flex gap-2 justify-end">
@@ -307,7 +327,9 @@ const Comments = ({ videoId }: any) => {
                     <div className="space-y-2">
                       <Textarea
                         value={editText}
-                        onChange={(e: any) => setEditText(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setEditText(e.target.value)
+                        }
                       />
                       <div className="flex gap-2 justify-end">
                         <Button
@@ -333,7 +355,7 @@ const Comments = ({ videoId }: any) => {
                         {translatedComments[comment._id] || comment.commentbody}
                       </p>
 
-                      <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-muted-foreground">
 
                         <button
                           onClick={() => handleLike(comment._id)}
@@ -380,8 +402,11 @@ const Comments = ({ videoId }: any) => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleTranslate(comment._id)}
+                          disabled={translatingComments.has(comment._id)}
                         >
-                          🌐 Translate
+                          {translatingComments.has(comment._id)
+                            ? "Translating..."
+                            : "🌐 Translate"}
                         </Button>
 
                       </div>

@@ -1,41 +1,52 @@
-import nodemailer from "nodemailer";
 import "dotenv/config";
+import fs from "fs";
 
-const emailUser = process.env.EMAIL_USER;
-const emailPassword = process.env.EMAIL_PASS;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-if (!emailUser || !emailPassword) {
-  throw new Error("EMAIL_USER and EMAIL_PASS must be configured");
+if (!RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY must be configured");
 }
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: emailUser,
-    pass: emailPassword.replace(/\s/g, ""),
-  },
-  family: 4,
-});
-
-const sendEmail = async ({
-  to,
-  subject,
-  text,
-  html,
-  attachments = [],
-}) => {
+const sendEmail = async ({ to, subject, text, html, attachments = [] }) => {
   try {
-    await transporter.verify();
-
-    await transporter.sendMail({
-      from: `"YouTube Clone" <${emailUser}>`,
-      to,
-      subject,
-      text,
-      html,
-      attachments,
+    const formattedAttachments = attachments.map((att) => {
+      let content;
+      if (att.path) {
+        content = fs.readFileSync(att.path).toString("base64");
+      } else if (att.content) {
+        content = Buffer.isBuffer(att.content)
+          ? att.content.toString("base64")
+          : Buffer.from(att.content).toString("base64");
+      }
+      return { filename: att.filename, content };
     });
 
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `YouTube Clone <${FROM_EMAIL}>`,
+        to: [to],
+        subject,
+        text,
+        html,
+        attachments: formattedAttachments.length
+          ? formattedAttachments
+          : undefined,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Resend API error");
+    }
+
+    return data;
   } catch (error) {
     console.error("Email sending failed:", error);
     throw new Error("Unable to send OTP email", { cause: error });

@@ -1,11 +1,12 @@
 import "dotenv/config";
 import fs from "fs";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
+const SENDER_NAME = process.env.BREVO_SENDER_NAME || "YouTube Clone";
 
-if (!RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY must be configured");
+if (!BREVO_API_KEY || !SENDER_EMAIL) {
+  throw new Error("BREVO_API_KEY and BREVO_SENDER_EMAIL must be configured");
 }
 
 const sendEmail = async ({ to, subject, text, html, attachments = [] }) => {
@@ -19,22 +20,23 @@ const sendEmail = async ({ to, subject, text, html, attachments = [] }) => {
           ? att.content.toString("base64")
           : Buffer.from(att.content).toString("base64");
       }
-      return { filename: att.filename, content };
+      return { name: att.filename, content };
     });
 
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "api-key": BREVO_API_KEY,
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
-        from: `YouTube Clone <${FROM_EMAIL}>`,
-        to: [to],
+        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+        to: [{ email: to }],
         subject,
-        text,
-        html,
-        attachments: formattedAttachments.length
+        textContent: text,
+        htmlContent: html,
+        attachment: formattedAttachments.length
           ? formattedAttachments
           : undefined,
       }),
@@ -43,7 +45,7 @@ const sendEmail = async ({ to, subject, text, html, attachments = [] }) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data?.message || "Resend API error");
+      throw new Error(data?.message || "Brevo API error");
     }
 
     return data;

@@ -14,6 +14,7 @@ const transporter = nodemailer.createTransport({
     user: emailUser,
     pass: emailPassword.replace(/\s/g, ""),
   },
+  family: 4,
 });
 
 const sendEmail = async ({

@@ -308,6 +308,14 @@ export const verifyOTP = async (req, res) => {
     const ip = getClientIp(req);
     const { city, state } = await getLocation(ip);
     const device = req.body.device;
+    const { latitude, longitude } = req.body;
+    const hasValidCoordinates =
+      Number.isFinite(latitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      Number.isFinite(longitude) &&
+      longitude >= -180 &&
+      longitude <= 180;
 
     if (!user || !device) {
       return res.status(400).json({
@@ -321,6 +329,8 @@ export const verifyOTP = async (req, res) => {
     user.lastLoginState = state;
     user.lastLoginDevice = device;
     user.isVerifiedDevice = true;
+    user.lastLoginLatitude = hasValidCoordinates ? latitude : null;
+    user.lastLoginLongitude = hasValidCoordinates ? longitude : null;
 
     await user.save();
 

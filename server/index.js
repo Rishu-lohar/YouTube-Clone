@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import path from "path";
 import http from "http";
 import { Server } from "socket.io";
+import { uploadsDirectory } from "./filehelper/uploadStorage.js";
 
 import userroutes from "./routes/auth.js";
 import videoroutes from "./routes/video.js";
@@ -53,7 +54,7 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 app.use(bodyParser.json());
 
 // Static folders
-app.use("/uploads", express.static(path.join("uploads")));
+app.use("/uploads", express.static(uploadsDirectory));
 app.use("/videos", express.static(path.join("public/videos")));
 
 app.get("/", (req, res) => {

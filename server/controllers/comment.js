@@ -2,6 +2,8 @@
 import comment from "../models/comment.js";
 import mongoose from "mongoose";
 import { translate } from "@vitalets/google-translate-api";
+import video from "../models/video.js";
+import { createActivityNotification } from "./Notification.js";
 
 import {
   containsBadWords,
@@ -47,6 +49,25 @@ export const postcomment = async (req, res) => {
     const newComment = new comment(req.body);
 
     await newComment.save();
+
+    try {
+      if (mongoose.Types.ObjectId.isValid(newComment.videoid)) {
+        const commentedVideo = await video
+          .findById(newComment.videoid)
+          .select("uploader videotitle");
+
+        if (commentedVideo) {
+          await createActivityNotification({
+            recipientId: commentedVideo.uploader,
+            actorId: newComment.userid,
+            type: "comment",
+            subject: commentedVideo.videotitle,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Unable to create video-comment notification:", error);
+    }
 
     return res.status(200).json({
       comment: true,

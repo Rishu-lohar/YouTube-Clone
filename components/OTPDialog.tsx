@@ -47,6 +47,10 @@ export default function OTPDialog() {
           {otpEmail}
         </p>
 
+        <p className="text-sm text-muted-foreground mb-4">
+          Location permission is optional and is only used to record the location for this sign-in verification.
+        </p>
+
         <input
           autoFocus
           type="text"

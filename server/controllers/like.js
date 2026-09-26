@@ -1,5 +1,6 @@
 import video from "../models/video.js";
 import like from "../models/like.js";
+import { createActivityNotification } from "./Notification.js";
 
 export const handlelike = async (req, res) => {
   try {
@@ -28,9 +29,24 @@ export const handlelike = async (req, res) => {
       videoid: videoId,
     });
 
-    await video.findByIdAndUpdate(videoId, {
-      $inc: { Like: 1 },
-    });
+    const likedVideo = await video.findByIdAndUpdate(
+      videoId,
+      { $inc: { Like: 1 } },
+      { new: true }
+    );
+
+    if (likedVideo) {
+      try {
+        await createActivityNotification({
+          recipientId: likedVideo.uploader,
+          actorId: userId,
+          type: "like",
+          subject: likedVideo.videotitle,
+        });
+      } catch (error) {
+        console.error("Unable to create video-like notification:", error);
+      }
+    }
 
     return res.status(200).json({
       liked: true,

@@ -51,6 +51,20 @@ const userschema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  lastLoginLatitude: {
+    type: Number,
+    default: null,
+    min: -90,
+    max: 90,
+    select: false,
+  },
+  lastLoginLongitude: {
+    type: Number,
+    default: null,
+    min: -180,
+    max: 180,
+    select: false,
+  },
 
   
   joinedon: { type: Date, default: Date.now },

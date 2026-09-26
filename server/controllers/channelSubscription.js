@@ -1,5 +1,7 @@
 import ChannelSubscription from "../models/channelSubscription.js";
 import User from "../models/Auth.js";
+import mongoose from "mongoose";
+import { createActivityNotification } from "./Notification.js";
 
 // Subscribe
 export const subscribe = async (req, res) => {
@@ -13,6 +15,16 @@ export const subscribe = async (req, res) => {
       });
     }
 
+    if (
+      !mongoose.Types.ObjectId.isValid(subscriberId) ||
+      !mongoose.Types.ObjectId.isValid(channelId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscriber or channel ID",
+      });
+    }
+
     if (subscriberId === channelId) {
       return res.status(400).json({
         success: false,
@@ -21,11 +33,12 @@ export const subscribe = async (req, res) => {
     }
 
     const channel = await User.findById(channelId);
+    const subscriber = await User.findById(subscriberId);
 
-    if (!channel) {
+    if (!channel || !subscriber) {
       return res.status(404).json({
         success: false,
-        message: "Channel not found",
+        message: !channel ? "Channel not found" : "Subscriber not found",
       });
     }
 
@@ -45,6 +58,16 @@ export const subscribe = async (req, res) => {
       subscriber: subscriberId,
       channel: channelId,
     });
+
+    try {
+      await createActivityNotification({
+        recipientId: channelId,
+        actorId: subscriberId,
+        type: "subscription",
+      });
+    } catch (error) {
+      console.error("Unable to create subscription notification:", error);
+    }
 
     return res.status(201).json({
       success: true,

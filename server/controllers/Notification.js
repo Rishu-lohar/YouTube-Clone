@@ -1,4 +1,40 @@
+import mongoose from "mongoose";
 import Notification from "../models/Notification.js";
+import User from "../models/Auth.js";
+
+export const createActivityNotification = async ({
+  recipientId,
+  actorId,
+  type,
+  subject,
+}) => {
+  if (
+    !mongoose.Types.ObjectId.isValid(recipientId) ||
+    !mongoose.Types.ObjectId.isValid(actorId) ||
+    String(recipientId) === String(actorId)
+  ) {
+    return null;
+  }
+
+  const [recipient, actor] = await Promise.all([
+    User.findById(recipientId).select("_id"),
+    User.findById(actorId).select("name channelname"),
+  ]);
+  if (!recipient || !actor) return null;
+
+  const actorName = actor.name || actor.channelname || "Someone";
+  const messages = {
+    subscription: `${actorName} subscribed to your channel`,
+    like: `${actorName} liked your video: ${subject}`,
+    comment: `${actorName} commented on your video: ${subject}`,
+  };
+
+  return Notification.create({
+    user: recipient._id,
+    type,
+    message: messages[type] || `${actorName} interacted with your content`,
+  });
+};
 
 // Get user's notifications
 export const getNotifications = async (req, res) => {

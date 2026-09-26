@@ -2,6 +2,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
+import { uploadsDirectory } from "../filehelper/uploadStorage.js";
 import video from "../models/video.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -215,7 +216,7 @@ export const uploadvideo = async (req, res) => {
     const newVideo = new video({
       videotitle: req.body.videotitle,
       filename: req.file.originalname,
-      filepath: req.file.path,
+      filepath: `uploads/${req.file.filename}`,
       filetype: req.file.mimetype,
       filesize: req.file.size,
       videochanel: req.body.videochanel,
@@ -282,7 +283,6 @@ export const deleteVideo = async (req, res) => {
     const normalizedFilepath = existingVideo.filepath.replace(/\\/g, "/");
     let localFile;
     if (normalizedFilepath.startsWith("uploads/")) {
-      const uploadsDirectory = path.resolve(__dirname, "../uploads");
       localFile = path.resolve(
         uploadsDirectory,
         normalizedFilepath.slice("uploads/".length)
